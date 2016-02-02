@@ -6,6 +6,7 @@
  */
 #include "NuIndex2str.C"
 #include "csv2array.C"
+#include "csv2matrix.C"
 const size_t NUM_FLAVORS = 3;
 
 /*
@@ -28,7 +29,7 @@ const size_t NUM_FLAVORS = 3;
  */
 int Flux2OscFlux(const int STARTNU, const size_t NBINS,
         const double EMIN, const double EMAX,
-        std::string infile, std::string outfile = "tmp.csv")
+        std::string infile, std::string outfile="tmp.csv")
 {
     double influx[NBINS];
     std::string influxstr[NBINS];
@@ -124,7 +125,7 @@ int Flux2OscFlux(const int STARTNU, const size_t NBINS,
  */
 int OscFlux2TrueSpectrum(const int NUSIGN, const size_t NBINS,
         const double EMIN, const double EMAX, const double NTARGETS,
-        std::string infile = "tmp.csv", std::string outfile = "tmp.csv")
+        std::string infile="tmp.csv", std::string outfile="tmp.csv")
 {
     const double XSEC_UNITS = 1e-38; // cm^2
     double influx[NUM_FLAVORS][NBINS];
@@ -216,5 +217,95 @@ int OscFlux2TrueSpectrum(const int NUSIGN, const size_t NBINS,
         }
     }
     fout.close();
+    return 0;
+}
+
+TrueSpec2RecoSpec(const int NUSIGN, const size_t NBINS,
+        const double EMIN, const double EMAX,
+        std::string infile="tmp.csv", std::string outfile="tmp.csv")
+{
+    TMatrixD* detectorresponse[NUM_FLAVORS];
+    double inspec[NUM_FLAVORS][NBINS];
+    std::string inspecstr[NUM_FLAVORS * NBINS];
+    TMatrixD* inspecmat[NUM_FLAVORS];
+    double outspec[NUM_FLAVORS][NBINS];
+    TMatrixD* outspecmat[NUM_FLAVORS];
+    int result = csv2array(infile, inspecstr, NUM_FLAVORS * NBINS);
+    if(result != 0)
+    {
+        std::cout << "ERROR: Result != 0: " << result << "\n";
+        return result;
+    }
+    else
+    {
+        std::cout << "INFO: Correctly read in csv file.\n";
+    }
+    // Convert the 3N*1 string array into an N*3 double array
+    double value = 0;
+    size_t flavor = 0;
+    size_t ebin = 0;
+    for(size_t bin = 0; bin < NUM_FLAVORS * NBINS; ++bin)
+    {
+        flavor = bin/NBINS; // Integer division
+        ebin = bin % NBINS;
+        value = atof(inspecstr[bin].c_str());
+        inspec[flavor][ebin] = value;
+    }
+    // Convert the double array into an array of TMatrixD column
+    // vectors.
+    for(size_t flavor = 0; flavor < NUM_FLAVORS; ++flavors)
+    {
+        inspecmat[flavor] = new TMatrixD(NBINS, 1);
+        inspecmat[flavor]->SetMatrixArray(inspec[flavor]);
+    }
+
+    // Read in the detector response matrices
+    std::string filename[NUM_FLAVORS];
+    std::string prefix = std::string("/afs/fnal.gov/files/home/room3") +
+        "/skohn/outputs/detector-response/";
+    if(NUSIGN > 0)
+    {
+        prefix += "nuflux_";
+    }
+    else
+    {
+        prefix += "anuflux_";
+    }
+    char filenameend[10];
+    sprintf(filenameend, "%d.csv", NBINS);
+    for(size_t flavor = 0; flavor < NUM_FLAVORS; ++flavor)
+    {
+        std::string temp;
+        NuIndex2str(2 * NUSIGN, temp);
+        filename[flavor] = prefix + temp + "flux_";
+        NuIndex2str((flavor + 1) * NUSIGN, temp);
+        filename[flavor] += temp + filenameend;
+        detectorresponse[flavor] = new TMatrixD(NBINS, NBINS);
+        int result = csv2matrix(filename[flavor], NBINS, NBINS,
+                detectorresponse[flavor]);
+        if(result != 0)
+        {
+            std::cout << "ERROR: Result != 0: " << result << "\n";
+            return result;
+        }
+        else
+        {
+            std::cout << "INFO: Correctly read in csv file.\n";
+        }
+    }
+
+    // Multiply the matrices
+    for(size_t flavor = 0; flavor < NUM_FLAVORS; ++flavor)
+    {
+        outspecmat[flavor] = new TMatrixD(NBINS, 1);
+        outspecmat[flavor]->Mult(detectorresponse[flavor], inspecmat[flavor]);
+        double* elements = outspecmat[flavor]->GetMatrixArray();
+        for(size_t i = 0; i < NBINS; ++i)
+        {
+            outspec[flavor][i] = elements[i];
+        }
+    }
+
+
     return 0;
 }
