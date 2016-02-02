@@ -11,7 +11,7 @@ int csv2array(std::string filename, std::string* outarray, const size_t length)
     if(!fin.good())
     {
         returnval = 4;
-        std::cout << "ERROR: Could not open file." << std::endl;
+        std::cout << "ERROR: Could not open file: " << filename << "\n";
         return returnval;
     }
     else
