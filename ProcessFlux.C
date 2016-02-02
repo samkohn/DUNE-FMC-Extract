@@ -122,14 +122,16 @@ int Flux2OscFlux(const int STARTNU, const size_t NBINS,
  * The output format is analogous to the input format, except the
  * entries represent numbers of interactions rather than fluxes.
  */
-int OscFlux2TrueSpectrum(const size_t NBINS, const double EMIN,
-        const double EMAX, std::string infile = "tmp.csv",
-        std::string outfile = "tmp.csv")
+int OscFlux2TrueSpectrum(const int NUSIGN, const size_t NBINS,
+        const double EMIN, const double EMAX, const double NTARGETS,
+        std::string infile = "tmp.csv", std::string outfile = "tmp.csv")
 {
+    const double XSEC_UNITS = 1e-38; // cm^2
     double influx[NUM_FLAVORS][NBINS];
-    double influxstr[NUM_FLAVORS * NBINS];
+    std::string influxstr[NUM_FLAVORS * NBINS];
     double outspec[NUM_FLAVORS][NBINS];
     double xsec[NUM_FLAVORS][NBINS];
+    std::string xsecstr[NUM_FLAVORS][NBINS];
     int result = csv2array(infile, influxstr, NUM_FLAVORS * NBINS);
     if(result != 0)
     {
@@ -154,4 +156,65 @@ int OscFlux2TrueSpectrum(const size_t NBINS, const double EMIN,
     }
 
     // Read in cross sections
+    char filenameend[10];
+    sprintf(filenameend, "%d.csv", NBINS);
+    std::string fileprefix = std::string("/afs/fnal.gov/files/home/") +
+        "room3/skohn/outputs/cross-sections/";
+    for(size_t nuflavor = 1; nuflavor <= NUM_FLAVORS; ++nuflavor)
+    {
+        int nutype = nuflavor * NUSIGN;
+        bool useUnderscores = true;
+        std::string nutypestr;
+        NuIndex2str(nutype, nutypestr, useUnderscores);
+        std::string infilestr = fileprefix + nutypestr +
+            "_Ar40__tot_cc" + filenameend;
+        result = csv2array(infilestr, xsecstr[nuflavor-1], NBINS);
+        if(result != 0)
+        {
+            std::cout << "ERROR: Result != 0: " << result << "\n";
+            return result;
+        }
+        else
+        {
+            std::cout << "INFO: Correctly read in csv file.\n";
+        }
+        // Convert cross sections to doubles
+        double value = 0;
+        for(size_t ebin = 0; ebin < NBINS; ++ebin)
+        {
+            value = atof(xsecstr[nuflavor-1][ebin].c_str());
+            xsec[nuflavor-1][ebin] = value;
+        }
+    }
+
+    // Create the spectrum by multiplying the flux by the cross section
+    for(size_t flavor = 0; flavor < NUM_FLAVORS; ++flavor)
+    {
+        for(size_t ebin = 0; ebin < NBINS; ++ebin)
+        {
+            outspec[flavor][ebin] = influx[flavor][ebin] *
+                xsec[flavor][ebin] * NTARGETS * XSEC_UNITS;
+        }
+    }
+    std::ofstream fout;
+    // The trunc option overwrites the existing file.
+    fout.open(outfile.c_str(), std::ofstream::trunc);
+    if(!fout.is_open())
+    {
+        std::cout << "Error: Could not open file\n";
+        return 2;
+    }
+    else
+    {
+        std::cout << "INFO: Opened output file\n";
+    }
+    for(size_t flavor = 0; flavor < NUM_FLAVORS; ++flavor)
+    {
+        for(size_t bin = 0; bin < NBINS; ++bin)
+        {
+            fout << outspec[flavor][bin] << "\n";
+        }
+    }
+    fout.close();
+    return 0;
 }
