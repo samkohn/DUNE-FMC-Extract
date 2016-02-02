@@ -1,0 +1,14 @@
+#!/bin/bash
+
+names=(nu_e_Ar40 nu_e_bar_Ar40 nu_mu_Ar40 nu_mu_bar_Ar40 nu_tau_Ar40 \
+nu_tau_bar_Ar40)
+
+channels=(tot_cc tot_nc)
+
+for name in ${names[*]}
+do
+    for channel in ${channels[*]}
+    do
+        root -b -l -q "ExtractCrossSectionVector.C(\"$name\", \"$channel\")"
+    done
+done
