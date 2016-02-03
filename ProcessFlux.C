@@ -253,7 +253,7 @@ TrueSpec2RecoSpec(const int NUSIGN, const size_t NBINS,
     }
     // Convert the double array into an array of TMatrixD column
     // vectors.
-    for(size_t flavor = 0; flavor < NUM_FLAVORS; ++flavors)
+    for(size_t flavor = 0; flavor < NUM_FLAVORS; ++flavor)
     {
         inspecmat[flavor] = new TMatrixD(NBINS, 1);
         inspecmat[flavor]->SetMatrixArray(inspec[flavor]);
@@ -298,7 +298,8 @@ TrueSpec2RecoSpec(const int NUSIGN, const size_t NBINS,
     for(size_t flavor = 0; flavor < NUM_FLAVORS; ++flavor)
     {
         outspecmat[flavor] = new TMatrixD(NBINS, 1);
-        outspecmat[flavor]->Mult(detectorresponse[flavor], inspecmat[flavor]);
+        outspecmat[flavor]->Mult(*(detectorresponse[flavor]), *(inspecmat[flavor]));
+        // Extract the product into an array
         double* elements = outspecmat[flavor]->GetMatrixArray();
         for(size_t i = 0; i < NBINS; ++i)
         {
@@ -306,6 +307,27 @@ TrueSpec2RecoSpec(const int NUSIGN, const size_t NBINS,
         }
     }
 
+    // Dump the results to a CSV file
+    std::ofstream fout;
+    // The trunc option overwrites the existing file.
+    fout.open(outfile.c_str(), std::ofstream::trunc);
+    if(!fout.is_open())
+    {
+        std::cout << "Error: Could not open file\n";
+        return 2;
+    }
+    else
+    {
+        std::cout << "INFO: Opened output file\n";
+    }
+    for(size_t flavor = 0; flavor < NUM_FLAVORS; ++flavor)
+    {
+        for(size_t bin = 0; bin < NBINS; ++bin)
+        {
+            fout << outspec[flavor][bin] << "\n";
+        }
+    }
+    fout.close();
 
     return 0;
 }
