@@ -10,6 +10,27 @@
 const size_t NUM_FLAVORS = 3;
 
 /*
+ * This macro runs all of the other macros on this page in order
+ */
+int ProcessFlux(const int STARTNU, const size_t NBINS,
+        const double EMIN, const double EMAX,
+        const double NTARGETS, std::string infile,
+        std::string outfile="tmp.csv")
+{
+    int ret = 0;
+    ret = Flux2OscFlux(STARTNU, NBINS, EMIN, EMAX, infile);
+    if(ret != 0) return ret;
+    ret = OscFlux2TrueSpectrum(STARTNU, NBINS, EMIN, EMAX, NTARGETS);
+    if(ret != 0) return ret;
+    ret = TrueSpec2RecoSpec(STARTNU, NBINS, EMIN, EMAX);
+    if(ret != 0) return ret;
+    ret = RecoSpec2SignalSpec(STARTNU, NBINS, EMIN, EMAX, outfile);
+    return ret;
+}
+
+
+
+/*
  * This macro converts an initial flux into 3 oscillated fluxes, one for
  * each flavor.
  *
@@ -123,10 +144,11 @@ int Flux2OscFlux(const int STARTNU, const size_t NBINS,
  * The output format is analogous to the input format, except the
  * entries represent numbers of interactions rather than fluxes.
  */
-int OscFlux2TrueSpectrum(const int NUSIGN, const size_t NBINS,
+int OscFlux2TrueSpectrum(const int STARTNU, const size_t NBINS,
         const double EMIN, const double EMAX, const double NTARGETS,
         std::string infile="tmp.csv", std::string outfile="tmp.csv")
 {
+    const int NUSIGN = STARTNU > 0 ? +1 : -1;
     const double XSEC_UNITS = 1e-38; // cm^2
     double influx[NUM_FLAVORS][NBINS];
     std::string influxstr[NUM_FLAVORS * NBINS];
@@ -220,10 +242,11 @@ int OscFlux2TrueSpectrum(const int NUSIGN, const size_t NBINS,
     return 0;
 }
 
-TrueSpec2RecoSpec(const int NUSIGN, const size_t NBINS,
+TrueSpec2RecoSpec(const int STARTNU, const size_t NBINS,
         const double EMIN, const double EMAX,
         std::string infile="tmp.csv", std::string outfile="tmp.csv")
 {
+    const int NUSIGN = STARTNU > 0 ? +1 : -1;
     TMatrixD* detectorresponse[NUM_FLAVORS];
     double inspec[NUM_FLAVORS][NBINS];
     std::string inspecstr[NUM_FLAVORS * NBINS];
@@ -329,5 +352,110 @@ TrueSpec2RecoSpec(const int NUSIGN, const size_t NBINS,
     }
     fout.close();
 
+    return 0;
+}
+/*
+ * This macro converts a reconstructed spectrum into a signal spectrum
+ * by applying an energy-dependent efficiency factor.
+ *
+ * If no infile or outfile is given, the default of tmp.csv will be
+ * used and the input will be overwritten. If an infile is given but no
+ * outfile, the default of tmp.csv will be used for the outfile and the
+ * input will be preserved.
+ *
+ * The input format is the same as the output format of Flux2OscFlux.
+ * The output format is analogous to the input format, except the
+ * entries represent numbers of interactions rather than fluxes.
+ */
+int RecoSpec2SignalSpec(const int STARTNU, const size_t NBINS,
+        const double EMIN, const double EMAX,
+        std::string outfile="tmp.csv", std::string infile="tmp.csv")
+{
+    const int NUSIGN = STARTNU > 0 ? +1 : -1;
+    double inspec[NUM_FLAVORS][NBINS];
+    std::string inspecstr[NUM_FLAVORS * NBINS];
+    double outspec[NUM_FLAVORS][NBINS];
+    double efficiencies[NUM_FLAVORS][NBINS];
+    std::string efficienciesstr[NUM_FLAVORS][NBINS];
+    int result = csv2array(infile, inspecstr, NUM_FLAVORS * NBINS);
+    if(result != 0)
+    {
+        std::cout << "ERROR: Result != 0: " << result << "\n";
+        return result;
+    }
+    else
+    {
+        std::cout << "INFO: Correctly read in csv file.\n";
+    }
+
+    // Convert the 3N*1 string array into an N*3 double array
+    double value = 0;
+    size_t flavor = 0;
+    size_t ebin = 0;
+    for(size_t bin = 0; bin < NUM_FLAVORS * NBINS; ++bin)
+    {
+        flavor = bin/NBINS; // Integer division
+        ebin = bin % NBINS;
+        value = atof(inspecstr[bin].c_str());
+        inspec[flavor][ebin] = value;
+    }
+
+    // Read in efficiencies
+    char filenameend[10];
+    sprintf(filenameend, "%d.csv", NBINS);
+    std::string fileprefix = std::string("/afs/fnal.gov/files/home/") +
+        "room3/skohn/outputs/efficiencies/";
+    for(size_t nuflavor = 1; nuflavor <= 1/*NUM_FLAVORS TODO*/; ++nuflavor)
+    {
+        std::string infilestr = fileprefix + "nueCCsig_efficiency.csv";
+        result = csv2array(infilestr, efficienciesstr[nuflavor-1], NBINS);
+        if(result != 0)
+        {
+            std::cout << "ERROR: Result != 0: " << result << "\n";
+            return result;
+        }
+        else
+        {
+            std::cout << "INFO: Correctly read in csv file.\n";
+        }
+        // Convert efficiencies to doubles
+        double value = 0;
+        for(size_t ebin = 0; ebin < NBINS; ++ebin)
+        {
+            value = atof(efficienciesstr[nuflavor-1][ebin].c_str());
+            efficiencies[nuflavor-1][ebin] = value;
+        }
+    }
+
+    // Create the spectrum by multiplying the reco spectrum by the
+    // efficiencies
+    for(size_t flavor = 0; flavor < 1/*NUM_FLAVORS TODO*/; ++flavor)
+    {
+        for(size_t ebin = 0; ebin < NBINS; ++ebin)
+        {
+            outspec[flavor][ebin] = inspec[flavor][ebin] *
+                efficiencies[flavor][ebin];
+        }
+    }
+    std::ofstream fout;
+    // The trunc option overwrites the existing file.
+    fout.open(outfile.c_str(), std::ofstream::trunc);
+    if(!fout.is_open())
+    {
+        std::cout << "Error: Could not open file\n";
+        return 2;
+    }
+    else
+    {
+        std::cout << "INFO: Opened output file\n";
+    }
+    for(size_t flavor = 0; flavor < 1/*NUM_FLAVORS TODO*/; ++flavor)
+    {
+        for(size_t bin = 0; bin < NBINS; ++bin)
+        {
+            fout << outspec[flavor][bin] << "\n";
+        }
+    }
+    fout.close();
     return 0;
 }
