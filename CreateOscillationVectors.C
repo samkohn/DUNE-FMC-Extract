@@ -2,8 +2,10 @@
  * This macro creates a set of three oscillation probability vectors for
  * energy bins as specified in the arguments. The probability assigned
  * to each bin is that of a neutrino with an energy at the midpoint of
- * the bin. Uses the Prob3++ oscillation probability calculator and the
- * Nu-Fit JHEP 11 (2014) 052 [arXiv:1409.5439] oscillation parameters.
+ * the bin. Uses the Prob3++ oscillation probability calculator, the
+ * Nu-Fit JHEP 11 (2014) 052 [arXiv:1409.5439] oscillation parameters
+ * using the normal hierarchy and delta-cp = 0, and a baseline of 1300km
+ * and earth density of 2.7 g/cm^3.
  */
 #include "/dune/app/users/lblpwg_tools/INSTALLATION/include/Prob3++/BargerPropagator.h"
 #include <fstream>
