@@ -11,6 +11,7 @@
 #include <fstream>
 #include <TMath.h>
 #include "NuIndex2str.C"
+#include "Configuration.C"
 
 int nuIndex2str(int, std::string&);
 int CreateOscillationVectors(const size_t, const double, const double);
@@ -67,10 +68,11 @@ int CreateOscillationVectors(const size_t NBINS, const double EMIN,
             // dump the probabilities vector to a csv
             std::ofstream fout;
             char filenameend[10]; // 10 is safe with 1000 max bins
+            char outputdir[100];
             sprintf(filenameend, "%d.csv", NBINS);
-            fout.open((std::string("/afs/fnal.gov/files/home/room3/") +
-                        "skohn/outputs/oscvectors/" + startnustr +
-                        "_" + endnustr + filenameend).c_str());
+            fout.open((std::string(CFG_OutputDirectory(outputdir)) +
+                        "oscvectors/" + startnustr + "_" + endnustr +
+                        filenameend).c_str());
             if(!fout.is_open())
             {
                 std::cout << "ERROR: Could not open file\n";

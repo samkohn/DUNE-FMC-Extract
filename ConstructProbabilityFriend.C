@@ -7,6 +7,7 @@
 #include <fstream>
 #include <TTree.h>
 #include <TFile.h>
+#include "Configuration.C"
 
 int ConstructProbabilityFriend()
 {
@@ -93,9 +94,9 @@ int ConstructProbabilityFriend()
         int neutrinoend = *endit;
 
         // Set up the output tree
-        TFile* fout = TFile::Open((std::string("/afs/fnal.gov/files/home/") +
-                        "room3/skohn/outputs/oscprob/" + temp +
-                        "__OSCPROB.root").c_str(), "RECREATE");
+        char ouptutdir[100];
+        TFile* fout = TFile::Open((std::string(CFG_OutputDirectory(outputdir)) +
+                "oscprob/" + temp + "__OSCPROB.root").c_str(), "RECREATE");
         TTree* oscprob = new TTree("OSCPROB",
                 "Oscillation Probabilities for FMC events");
         double probability = 0;

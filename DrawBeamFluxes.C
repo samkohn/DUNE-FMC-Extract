@@ -1,3 +1,4 @@
+#include "Configuration.C"
 int DrawBeamFluxes()
 {
     std::vector<std::string> filenames;
@@ -40,7 +41,8 @@ int DrawBeamFluxes()
 
         spectrum->GetXaxis()->SetTitle("E_{#nu} [GeV]");
         spectrum->GetYaxis()->SetTitle("Spectrum [a.u.]");
-        c1->Print((std::string("~/outputs/") + temp + ".pdf").c_str());
+        char outputdir[100];
+        c1->Print((std::string(CFG_OutputDirectory(outputdir)) + temp + ".pdf").c_str());
         fin->Close();
     }
 }

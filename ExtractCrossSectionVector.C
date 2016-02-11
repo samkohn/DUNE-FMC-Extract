@@ -6,6 +6,7 @@
 // check whether a file exists (the "stat buffer" thing).
 #include <sys/stat.h>
 #include <unistd.h>
+#include "Configuration.C"
 int ExtractCrossSectionVector(std::string interaction_class, std::string xsec_type)
 {
     std::string inputfile = "gxspl-big.root";
@@ -41,9 +42,10 @@ int ExtractCrossSectionVector(std::string interaction_class, std::string xsec_ty
         std::cout << "INFO: Found desired graph." << std::endl;
     }
     std::ofstream outputfile;
-    outputfile.open((std::string("/afs/fnal.gov/files/home/room3/") + 
-                "skohn/outputs/cross-sections/" + interaction_class +
-                "__" + xsec_type + Form("%d.csv", EBINS)).c_str());
+    char outputdir[100];
+    outputfile.open((std::string(CFG_OutputDirectory(outputdir)) +
+                "cross-sections/" + interaction_class + "__" +
+                xsec_type + Form("%d.csv", EBINS)).c_str());
     if(!outputfile.is_open())
     {
         std::cout << "ERROR: Could not open file\n";
@@ -67,9 +69,8 @@ int ExtractCrossSectionVector(std::string interaction_class, std::string xsec_ty
     }
     outputfile.close();
     // Check to see if the energy list exists
-    std::string energylistname = std::string("/afs/fnal.gov/files/home/room3/") +
-                "skohn/outputs/cross-sections/" +
-                Form("energies%d.csv", EBINS);
+    std::string energylistname = std::string(outputdir)
+        + "cross-sections/" + Form("energies%d.csv", EBINS);
     struct stat buffer;
     if(stat (energylistname.c_str(), &buffer) == 0)
     {

@@ -1,3 +1,5 @@
+#include "Configuration.C"
+
 int ExtractBeamFluxes(const int NBINS, const double EMIN,
         const double EMAX)
 {
@@ -10,8 +12,9 @@ int ExtractBeamFluxes(const int NBINS, const double EMIN,
     filenames.push_back("anuflux_nueflux_nue");
     filenames.push_back("anuflux_numubarflux_numubar");
     filenames.push_back("anuflux_nuebarflux_nuebar");
-    std::string prefix = std::string("/afs/fnal.gov/files/home/room3/") +
-        "skohn/outputs/oscprob/";
+    char outputdir[100];
+    std::string prefix = std::string(CFG_OutputDirectory(outputdir)) +
+        "oscprob/";
     std::string suffix = "__OSCPROB.root";
     std::vector<std::string>::iterator it = filenames.begin();
     for(it; it != filenames.end(); ++it)

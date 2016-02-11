@@ -7,6 +7,7 @@
 #include "NuIndex2str.C"
 #include "csv2array.C"
 #include "csv2matrix.C"
+#include "Configuration.C"
 const size_t NUM_FLAVORS = 3;
 
 /*
@@ -52,6 +53,8 @@ int Flux2OscFlux(const int STARTNU, const size_t NBINS,
         const double EMIN, const double EMAX,
         std::string infile, std::string outfile="tmp.csv")
 {
+    char outputdir[100];
+    CFG_OutputDirectory(outputdir);
     double influx[NBINS];
     std::string influxstr[NBINS];
     double outflux[NUM_FLAVORS][NBINS];
@@ -90,9 +93,8 @@ int Flux2OscFlux(const int STARTNU, const size_t NBINS,
     for(size_t i = 0; i < NUM_FLAVORS; ++i)
     {
         NuIndex2str((i + 1) * nusign, endnustr[i]);
-        finstr[i] = std::string("/afs/fnal.gov/files/home/room3/") +
-            "skohn/outputs/oscvectors/" + startnustr +
-            "_" + endnustr[i] + filenameend;
+        finstr[i] = std::string(outputdir) + "oscvectors/" +
+            startnustr + "_" + endnustr[i] + filenameend;
         // Read in the probabilities
         result = csv2array(finstr[i], probsstr[i], NBINS);
         if(result != 0)
@@ -148,6 +150,8 @@ int OscFlux2TrueSpectrum(const int STARTNU, const size_t NBINS,
         const double EMIN, const double EMAX, const double NTARGETS,
         std::string infile="tmp.csv", std::string outfile="tmp.csv")
 {
+    char outputdir[100];
+    CFG_OutputDirectory(outputdir);
     const int NUSIGN = STARTNU > 0 ? +1 : -1;
     const double XSEC_UNITS = 1e-38; // cm^2
     double influx[NUM_FLAVORS][NBINS];
@@ -181,8 +185,7 @@ int OscFlux2TrueSpectrum(const int STARTNU, const size_t NBINS,
     // Read in cross sections
     char filenameend[10];
     sprintf(filenameend, "%d.csv", NBINS);
-    std::string fileprefix = std::string("/afs/fnal.gov/files/home/") +
-        "room3/skohn/outputs/cross-sections/";
+    std::string fileprefix = std::string(outputdir) + "cross-sections/";
     for(size_t nuflavor = 1; nuflavor <= NUM_FLAVORS; ++nuflavor)
     {
         int nutype = nuflavor * NUSIGN;
@@ -246,6 +249,8 @@ TrueSpec2RecoSpec(const int STARTNU, const size_t NBINS,
         const double EMIN, const double EMAX,
         std::string infile="tmp.csv", std::string outfile="tmp.csv")
 {
+    char outputdir[100];
+    CFG_OutputDirectory(outputdir);
     const int NUSIGN = STARTNU > 0 ? +1 : -1;
     TMatrixD* detectorresponse[NUM_FLAVORS];
     double inspec[NUM_FLAVORS][NBINS];
@@ -284,8 +289,7 @@ TrueSpec2RecoSpec(const int STARTNU, const size_t NBINS,
 
     // Read in the detector response matrices
     std::string filename[NUM_FLAVORS];
-    std::string prefix = std::string("/afs/fnal.gov/files/home/room3") +
-        "/skohn/outputs/detector-response/";
+    std::string prefix = std::string(outputdir) + "detector-response/";
     if(NUSIGN > 0)
     {
         prefix += "nuflux_";
@@ -371,6 +375,8 @@ int RecoSpec2SignalSpec(const int STARTNU, const size_t NBINS,
         const double EMIN, const double EMAX,
         std::string outfile="tmp.csv", std::string infile="tmp.csv")
 {
+    char outputdir[100];
+    CFG_OutputDirectory(outputdir);
     const int NUSIGN = STARTNU > 0 ? +1 : -1;
     double inspec[NUM_FLAVORS][NBINS];
     std::string inspecstr[NUM_FLAVORS * NBINS];
@@ -403,8 +409,7 @@ int RecoSpec2SignalSpec(const int STARTNU, const size_t NBINS,
     // Read in efficiencies
     char filenameend[10];
     sprintf(filenameend, "%d.csv", NBINS);
-    std::string fileprefix = std::string("/afs/fnal.gov/files/home/") +
-        "room3/skohn/outputs/efficiencies/";
+    std::string fileprefix = std::string(outputdir) + "efficiencies/";
     for(size_t nuflavor = 1; nuflavor <= 1/*NUM_FLAVORS TODO*/; ++nuflavor)
     {
         std::string infilestr = fileprefix + "nueCCsig_efficiency.csv";

@@ -1,4 +1,5 @@
 #include <fstream>
+#include "Configuration.C"
 int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
 {
     std::vector<std::string> filenames;
@@ -79,8 +80,9 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
         }
         // Print out the matrix information
         std::ofstream outputfile;
-        outputfile.open((std::string("/afs/fnal.gov/files/home/room3/") + 
-                    "skohn/outputs/detector-response/" + fluxtype +
+        char outputdir[100];
+        outputfile.open((std::string(CFG_OutputDirectory(outputdir)) +
+                    "detector-response/" + fluxtype +
                     Form("%d.csv", NBINSSQUARE)).c_str());
         if(!outputfile.is_open())
         {
