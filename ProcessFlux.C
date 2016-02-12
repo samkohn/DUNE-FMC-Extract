@@ -19,13 +19,21 @@ int ProcessFlux(const int STARTNU, const size_t NBINS,
         std::string outfile="tmp.csv")
 {
     int ret = 0;
+    std::cout << "INFO: Beginning Flux2OscFlux\n";
     ret = Flux2OscFlux(STARTNU, NBINS, EMIN, EMAX, infile);
+    std::cout << "INFO: Ending Flux2OscFlux\n";
     if(ret != 0) return ret;
+    std::cout << "INFO: Beginning OscFlux2TrueSpectrum\n";
     ret = OscFlux2TrueSpectrum(STARTNU, NBINS, EMIN, EMAX, NTARGETS);
+    std::cout << "INFO: Ending OscFlux2TrueSpectrum\n";
     if(ret != 0) return ret;
+    std::cout << "INFO: Beginning TrueSpec2RecoSpec\n";
     ret = TrueSpec2RecoSpec(STARTNU, NBINS, EMIN, EMAX);
+    std::cout << "INFO: Ending TrueSpec2RecoSpec\n";
     if(ret != 0) return ret;
+    std::cout << "INFO: Beginning RecoSpec2SignalSpec\n";
     ret = RecoSpec2SignalSpec(STARTNU, NBINS, EMIN, EMAX, outfile);
+    std::cout << "INFO: Ending RecoSpec2SignalSpec\n";
     return ret;
 }
 
@@ -93,7 +101,7 @@ int Flux2OscFlux(const int STARTNU, const size_t NBINS,
     for(size_t i = 0; i < NUM_FLAVORS; ++i)
     {
         NuIndex2str((i + 1) * nusign, endnustr[i]);
-        finstr[i] = std::string(outputdir) + "oscvectors/" +
+        finstr[i] = std::string(outputdir) + "Oscillation-Parameters/" +
             startnustr + "_" + endnustr[i] + filenameend;
         // Read in the probabilities
         result = csv2array(finstr[i], probsstr[i], NBINS);
@@ -185,7 +193,7 @@ int OscFlux2TrueSpectrum(const int STARTNU, const size_t NBINS,
     // Read in cross sections
     char filenameend[10];
     sprintf(filenameend, "%d.csv", NBINS);
-    std::string fileprefix = std::string(outputdir) + "cross-sections/";
+    std::string fileprefix = std::string(outputdir) + "Cross-Sections/";
     for(size_t nuflavor = 1; nuflavor <= NUM_FLAVORS; ++nuflavor)
     {
         int nutype = nuflavor * NUSIGN;
@@ -289,7 +297,7 @@ TrueSpec2RecoSpec(const int STARTNU, const size_t NBINS,
 
     // Read in the detector response matrices
     std::string filename[NUM_FLAVORS];
-    std::string prefix = std::string(outputdir) + "detector-response/";
+    std::string prefix = std::string(outputdir) + "Detector-Response/DetRespMat-";
     if(NUSIGN > 0)
     {
         prefix += "nuflux_";
@@ -298,8 +306,8 @@ TrueSpec2RecoSpec(const int STARTNU, const size_t NBINS,
     {
         prefix += "anuflux_";
     }
-    char filenameend[10];
-    sprintf(filenameend, "%d.csv", NBINS);
+    char filenameend[10] = ".csv";
+    //sprintf(filenameend, "%d.csv", NBINS);
     for(size_t flavor = 0; flavor < NUM_FLAVORS; ++flavor)
     {
         std::string temp;
@@ -313,6 +321,7 @@ TrueSpec2RecoSpec(const int STARTNU, const size_t NBINS,
         if(result != 0)
         {
             std::cout << "ERROR: Result != 0: " << result << "\n";
+            std::cout << "filename = " << filename[flavor] << "\n";
             return result;
         }
         else
@@ -409,7 +418,7 @@ int RecoSpec2SignalSpec(const int STARTNU, const size_t NBINS,
     // Read in efficiencies
     char filenameend[10];
     sprintf(filenameend, "%d.csv", NBINS);
-    std::string fileprefix = std::string(outputdir) + "efficiencies/";
+    std::string fileprefix = std::string(outputdir) + "Efficiencies/";
     for(size_t nuflavor = 1; nuflavor <= 1/*NUM_FLAVORS TODO*/; ++nuflavor)
     {
         std::string infilestr = fileprefix + "nueCCsig_efficiency.csv";
