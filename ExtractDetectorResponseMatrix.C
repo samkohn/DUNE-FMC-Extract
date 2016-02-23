@@ -48,6 +48,12 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
         const int YMAX = MAXSQUARE;
         TH2D* enuresponse = new TH2D(fluxtype.c_str(), fluxtype.c_str(), XBINS, XMIN, XMAX,
                 YBINS, YMIN, YMAX);
+        enuresponse->GetXaxis()->SetLabelSize(0.05);
+        enuresponse->GetYaxis()->SetLabelSize(0.05);
+        enuresponse->GetXaxis()->SetTitleSize(0.05);
+        enuresponse->GetYaxis()->SetTitleSize(0.05);
+        enuresponse->GetXaxis()->SetTitleOffset(0.9);
+        enuresponse->GetYaxis()->SetTitleOffset(1.1);
         fluxData->Draw((std::string("Ev_reco:Ev>>") + fluxtype).c_str(), "", "colz");
         enuresponse->GetXaxis()->SetTitle("E_{#nu} [GeV]");
         enuresponse->GetYaxis()->SetTitle("E_{#nu, reco} [GeV]");
