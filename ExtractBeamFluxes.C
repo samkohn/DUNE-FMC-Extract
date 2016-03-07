@@ -11,7 +11,7 @@ int ExtractBeamFluxes(const int NBINS, const double EMIN,
 
     char outputdir[100];
     std::string filename = std::string(CFG_OutputDirectory(outputdir)) +
-        "fmcflux/g4lbne_v3r2p4b_FHC_FD_RIK.root";
+        "fmcCD1CDRflux/g4lbne_CD1-CDR_Geo_RIK.root";
     TFile* fin = TFile::Open(filename.c_str(), "READ");
     if(!fin)
     {
@@ -34,8 +34,6 @@ int ExtractBeamFluxes(const int NBINS, const double EMIN,
 
         TCanvas* c1 = new TCanvas();
         TH1D* spectrum = (TH1D*) (fin->Get(histname.c_str()));
-        // TODO dump the histogram contents into a TGraph for
-        // interpolation.
         // The flux is given in units of neutrinos/GeV/m^2/POT
         // Expect histogram to have <500 bins
         const size_t INPUT_HIST_BINS = 500;
@@ -50,7 +48,7 @@ int ExtractBeamFluxes(const int NBINS, const double EMIN,
         // Dump the results to a CSV file
         std::ofstream outputfile;
         outputfile.open((std::string("/afs/fnal.gov/files/home/room3/") + 
-                    "skohn/outputs/beam-flux2/" + histname +
+                    "skohn/outputs/beam-flux-CD1CDR/" + histname +
                     Form("%d.csv", NBINS)).c_str());
         if(!outputfile.is_open())
         {
