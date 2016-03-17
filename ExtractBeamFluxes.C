@@ -6,12 +6,20 @@
  * with 125 MeV increments, a linear interpolation is performed.
  */
 int ExtractBeamFluxes(const int NBINS, const double EMIN,
-        const double EMAX)
+        const double EMAX, bool isNuMode=true)
 {
 
     char outputdir[100];
     std::string filename = std::string(CFG_OutputDirectory(outputdir)) +
-        "fmcCD1CDRflux/g4lbne_CD1-CDR_Geo_RIK.root";
+        "fmcCD1CDRflux/v3r2p4b/NuMI_Improved_120GeV_StandardDP/";
+    if(isNuMode)
+    {
+        filename += "g4lbne_v3r2p4b_FHC_FD_RIK.root";
+    }
+    else
+    {
+        filename += "g4lbne_v3r2p4b_RHC_FD_RIK.root";
+    }
     TFile* fin = TFile::Open(filename.c_str(), "READ");
     if(!fin)
     {
@@ -49,7 +57,7 @@ int ExtractBeamFluxes(const int NBINS, const double EMIN,
         std::ofstream outputfile;
         outputfile.open((std::string("/afs/fnal.gov/files/home/room3/") + 
                     "skohn/outputs/beam-flux-CD1CDR/" + histname +
-                    Form("%d.csv", NBINS)).c_str());
+                    Form("%d_%snumode.csv", NBINS, isNuMode?"":"a")).c_str());
         if(!outputfile.is_open())
         {
             std::cout << "ERROR: Could not open file\n";
