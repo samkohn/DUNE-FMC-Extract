@@ -61,7 +61,7 @@ int CreateManyOscillationVectors(const size_t NBINS, const double EMIN,
     x12s.push_back(0.304);
     std::vector<double> x23s;
     x23s.push_back(0.413175911);
-    x23s.push_back(0.5);
+    x23s.push_back(0.45); // ~nu-fit value
     x23s.push_back(0.586825089);
     std::vector<double> dm21s;
     dm21s.push_back(0.0000750);
