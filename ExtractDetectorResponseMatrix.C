@@ -20,7 +20,6 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
     filenames.push_back("anuflux_numubarflux_nuebar");
     filenames.push_back("anuflux_numuflux_nutau");
     filenames.push_back("anuflux_numubarflux_nutaubar");
-    /*
     std::vector<std::string> eventcuts;
     eventcuts.push_back("EvClass_reco == 0");
     eventcuts.push_back("EvClass_reco == 1");
@@ -29,16 +28,13 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
     eventcutnames.push_back("_numuCC-like");
     eventcutnames.push_back("_nueCC-like");
     eventcutnames.push_back("_NC-like");
-    */
     std::string prefix = "/dune/data/users/lblpwg_tools/FastMC_Data/outputs/cherdack/v3r2p4b/nominal";
     prefix.append("/fastmcNtp_20160105_lbne_g4lbnev3r2p4b_");
     std::string suffix = "_LAr_1_g280_Ar40_5000_GENIE_2100_Test.root";
-    /*
     for(size_t i = 0; i < eventcuts.size(); ++i)
     {
         std::string eventcutname = eventcutnames.at(i);
         std::string eventcut = eventcuts.at(i);
-        */
         std::vector<std::string>::iterator it;
         for(it = filenames.begin(); it != filenames.end(); ++it)
         {
@@ -72,10 +68,15 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
             enuresponse->GetYaxis()->SetTitleSize(0.05);
             enuresponse->GetXaxis()->SetTitleOffset(0.9);
             enuresponse->GetYaxis()->SetTitleOffset(1.1);
-            fluxData->Draw((std::string("Ev_reco:Ev>>") + fluxtype).c_str(), (/*eventcut + " &&*/ "nc")/*.c_str()*/, "colz");
+            fluxData->Draw((std::string("Ev_reco:Ev>>") + fluxtype).c_str(), (eventcut + " && cc").c_str(), "colz");
             enuresponse->GetXaxis()->SetTitle("E_{#nu} [GeV]");
             enuresponse->GetYaxis()->SetTitle("E_{#nu, reco} [GeV]");
             double nentries = enuresponse->Integral();
+            TH1D* normalizationHist = new TH1D("norm", "norm", 1, YMIN, YMAX);
+            fluxData->Draw("Ev>>norm", "cc");
+            double nentriesForAll = normalizationHist->Integral();
+            double fractionOfAll = nentries/nentriesForAll;
+            std::cout << "fractionOfAll = " << fractionOfAll << std::endl;
             enuresponse->Scale(1.0/nentries); // Normalize
             //c1->Print((std::string("~/outputs/detector-response/") + fluxtype + eventcutname + "_trueNC.pdf").c_str());
             // Normalize the columns of the histogram individually to get
@@ -98,7 +99,7 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
                 {
                     for(int row = 1; row <= YBINS; ++row)
                     {
-                        enuresponse->SetBinContent(column, row, values[row-1]/sum);
+                        enuresponse->SetBinContent(column, row, values[row-1]*fractionOfAll/sum);
                     }
                 }
             }
@@ -106,8 +107,8 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
             std::ofstream outputfile;
             char outputdir[100];
             outputfile.open((std::string(CFG_OutputDirectory(outputdir)) +
-                        "detector-response/" + fluxtype + /*eventcutname +*/
-                        Form("_trueNC%d.csv", NBINSSQUARE)).c_str());
+                        "detector-response/" + fluxtype + eventcutname +
+                        Form("_trueCC%d.csv", NBINSSQUARE)).c_str());
             if(!outputfile.is_open())
             {
                 std::cout << "ERROR\n";
@@ -132,7 +133,7 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
             fin->Close();
 
         }
-    //}
+    }
 
     return 0;
 }
