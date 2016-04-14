@@ -1,7 +1,7 @@
 #include <fstream>
 #include "Configuration.C"
 #include <TCut.h>
-int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
+int ExtractEfficiency(const int NBINSSQUARE)
 {
     std::vector<std::string> filenames;
     filenames.push_back("nuflux_numuflux_numu");
@@ -29,8 +29,8 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
     eventcutnames.push_back("_nueCC-like");
     eventcutnames.push_back("_NC-like");
     std::string prefix = "/dune/data/users/lblpwg_tools/FastMC_Data/outputs/cherdack/v3r2p4b/nominal";
-    prefix.append("/fastmcNtp_20160105_lbne_g4lbnev3r2p4b_");
-    std::string suffix = "_LAr_1_g280_Ar40_5000_GENIE_2100_Test.root";
+    prefix.append("/fastmcNtp_20160404_lbne_g4lbnev3r2p4b_");
+    std::string suffix = "_LAr_1_g280_Ar40_5000_GENIE_2100.root";
     for(size_t i = 0; i < eventcuts.size(); ++i)
     {
         std::string eventcutname = eventcutnames.at(i);
@@ -60,73 +60,42 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
             const int XMAX = MAXSQUARE;
             const int YMIN = MINSQUARE;
             const int YMAX = MAXSQUARE;
-            TH2D* enuresponse = new TH2D(fluxtype.c_str(), fluxtype.c_str(), XBINS, XMIN, XMAX,
-                    YBINS, YMIN, YMAX);
+            TH1D* enuresponse = new TH1D(fluxtype.c_str(), fluxtype.c_str(), XBINS, XMIN, XMAX);
             enuresponse->GetXaxis()->SetLabelSize(0.05);
             enuresponse->GetYaxis()->SetLabelSize(0.05);
             enuresponse->GetXaxis()->SetTitleSize(0.05);
             enuresponse->GetYaxis()->SetTitleSize(0.05);
             enuresponse->GetXaxis()->SetTitleOffset(0.9);
             enuresponse->GetYaxis()->SetTitleOffset(1.1);
-            fluxData->Draw((std::string("Ev_reco:Ev>>") + fluxtype).c_str(), (eventcut + " && cc").c_str(), "colz");
-            enuresponse->GetXaxis()->SetTitle("E_{#nu} [GeV]");
-            enuresponse->GetYaxis()->SetTitle("E_{#nu, reco} [GeV]");
+            fluxData->Draw((std::string("Ev_reco>>") + fluxtype).c_str(), (eventcut + " && cc").c_str());
+            enuresponse->GetXaxis()->SetTitle("E_{#nu, reco} [GeV]");
+            enuresponse->GetYaxis()->SetTitle("Number of events");
             double nentries = enuresponse->Integral();
-            TH1D* normalizationHist = new TH1D("norm", "norm", 1, YMIN, YMAX);
-            fluxData->Draw("Ev>>norm", "cc");
-            double nentriesForAll = normalizationHist->Integral();
-            double fractionOfAll = nentries/nentriesForAll;
-            std::cout << "fractionOfAll = " << fractionOfAll << std::endl;
-            enuresponse->Scale(1.0/nentries); // Normalize
+            TH1D* normalizationHist = new TH1D("norm", "norm", XBINS, XMIN, XMAX);
+            fluxData->Draw("Ev_reco>>norm", "cc");
+            enuresponse->Divide(normalizationHist); // Normalize
             //c1->Print((std::string("~/outputs/detector-response/") + fluxtype + eventcutname + "_trueNC.pdf").c_str());
-            // Normalize the columns of the histogram individually to get
-            // the matrix
-            double values[YBINS];
-            for(int column = 1; column <= XBINS; ++column)
-            {
-                double sum = 0;
-                for(int row = 1; row <= YBINS; ++row)
-                {
-                    values[row-1] = enuresponse->GetBinContent(column, row);
-                    sum += values[row-1];
-                }
-                if(TMath::Abs(sum - 0) < 0.000001)
-                {
-                    // Then all of the bins have 0 content so leave them
-                    // alone
-                }
-                else
-                {
-                    for(int row = 1; row <= YBINS; ++row)
-                    {
-                        enuresponse->SetBinContent(column, row, values[row-1]*fractionOfAll/sum);
-                    }
-                }
-            }
             // Print out the matrix information
             std::ofstream outputfile;
             char outputdir[100];
             outputfile.open((std::string(CFG_OutputDirectory(outputdir)) +
-                        "detector-response/" + fluxtype + eventcutname +
+                        "efficiencies2/" + fluxtype + eventcutname +
                         Form("_trueCC%d.csv", NBINSSQUARE)).c_str());
             if(!outputfile.is_open())
             {
                 std::cout << "ERROR\n";
                 return 0;
             }
-            for(int row = 1; row <= YBINS; ++row)
+            for(int column = 1; column <= XBINS; ++column)
             {
-                for(int column = 1; column <= XBINS; ++column)
+                outputfile << (enuresponse->GetBinContent(column));
+                if(column != XBINS)
                 {
-                    outputfile << (enuresponse->GetBinContent(column, row));
-                    if(column != XBINS)
-                    {
-                        outputfile << ", ";
-                    }
-                    else
-                    {
-                        outputfile << "\n";
-                    }
+                    outputfile << ", ";
+                }
+                else
+                {
+                    outputfile << "\n";
                 }
             }
             outputfile.close();
