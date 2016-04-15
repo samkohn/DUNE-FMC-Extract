@@ -22,347 +22,353 @@
  * (EvClass_reco == 1) selects events reconstructed to be nueCC-like,
  * i.e. events that could be confused with a true nueCC interaction.
  */
-const std::string FMCFOLDER = "/dune/data/users/lblpwg_tools/FastMC_Data/outputs/cherdack/v3r2p4b/nominal/";
-const std::string OSCPROBFOLDER = "/afs/fnal.gov/files/home/room3/skohn/outputs/oscprob2/";
+const char* FMCFOLDER = "/dune/data/users/lblpwg_tools/FastMC_Data/outputs/cherdack/v3r2p4b/nominal/";
+const char* OSCPROBFOLDER = "/afs/fnal.gov/files/home/room3/skohn/outputs/oscprob2/";
 const char* EVENTCUT_NUE = "(EvClass_reco == 1 && Tau_Prob_nue > 0.6 && NC_Prob_nue > 0.75)";
 const char* NORMALIZATION = "(POTWeight * POTperYear * 3.125 * 40)";
 const char* ENERGY_CUT = "(Ev_reco < 8 && Ev_reco > 0.5)";
 const char* OSC_PROBABILITY = "OSCPROB.probability";
-double numode_nue_signal(bool verbose=true)
+
+double get_uncertainty(TTree* fmcdata, std::string event_cut)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_numuflux_nue_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
+    TH1D* hist = new TH1D("stat", "stat", 100, 0.5, 8);
+    fmcdata->Draw("Ev_reco>>stat", event_cut.c_str());
+    double num_unweighted_events = hist->Integral();
+    double error_unweighted = TMath::Sqrt(num_unweighted_events);
+    double fractional_error = error_unweighted/num_unweighted_events;
+    return fractional_error;
+}
+
+double get_events(std::string fluxtype, std::string cc_or_nc, std::string message, double* error, bool verbose)
+{
+    TFile* fin = TFile::Open(Form("%sfastmcNtp_20160404_lbne_g4lbnev3r2p4b_%s_LAr_1_g280_Ar40_5000_GENIE_2100.root", FMCFOLDER, fluxtype.c_str()), "READ");
     TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_numuflux_nue__OSCPROB.root").c_str());
+    fmcdata->AddFriend("OSCPROB", Form("%s%s__OSCPROB.root", OSCPROBFOLDER, fluxtype.c_str()));
     long num_events = fmcdata->GetEntries();
     TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * cc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
+    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * %s * %s/%d", cc_or_nc.c_str(), OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
     double num_signal_events = hist->Integral();
+    if(error != 0)
+    {
+        (*error) = get_uncertainty(fmcdata, std::string(Form("%s*%s*%s",ENERGY_CUT, EVENTCUT_NUE, cc_or_nc.c_str())));
+        (*error) *= num_signal_events;
+    }
     if(verbose)
     {
-        std::cout << "nue signal: " << num_signal_events << "\n";
+        std::cout << message << ": " << num_signal_events << "\n";
+        if(error != 0)
+        {
+            std::cout << "    error: +/- " << (*error) << "\n";
+        }
     }
     fin->Close();
     return num_signal_events;
 }
 
-double numode_nuebar_signal(bool verbose=true)
+double numode_nue_signal(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_numubarflux_nuebar_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_numubarflux_nuebar__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * cc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "nuebar signal: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_numuflux_nue",
+            "cc",
+            "nue signal",
+            error,
+            verbose
+    );
 }
 
-double numode_total_signal(bool verbose=true)
+double numode_nuebar_signal(double* error=0, bool verbose=true)
 {
-    double nue_signal = numode_nue_signal(verbose);
-    double nuebar_signal = numode_nuebar_signal(verbose);
+    return get_events(
+            "nuflux_numubarflux_nuebar",
+            "cc",
+            "nuebar signal",
+            error,
+            verbose
+    );
+}
+
+double numode_total_signal(double* error=0, bool verbose=true)
+{
+    double nue_error = 0;
+    double nuebar_error = 0;
+    double nue_signal = numode_nue_signal(&nue_error, verbose);
+    double nuebar_signal = numode_nuebar_signal(&nuebar_error, verbose);
     double total_signal = nue_signal + nuebar_signal;
+    if(error != 0)
+    {
+        (*error) = TMath::Hypot(nue_error, nuebar_error);
+    }
     if(verbose)
     {
         std::cout << "total signal: " << total_signal << "\n";
+        if(error != 0)
+        {
+            std::cout << "total error: +/- " << (*error) << "\n";
+        }
     }
     return total_signal;
 }
 
-double numode_beamnue_bg(bool verbose=true)
+double numode_beamnue_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_nueflux_nue_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_nueflux_nue__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * cc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "beam nue background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_nueflux_nue",
+            "cc",
+            "beam nue bg",
+            error,
+            verbose
+    );
 }
 
-double numode_beamnuebar_bg(bool verbose=true)
+double numode_beamnuebar_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_nuebarflux_nuebar_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_nuebarflux_nuebar__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * cc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "beam nuebar background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_nuebarflux_nuebar",
+            "cc",
+            "beam nuebar bg",
+            error,
+            verbose
+    );
 }
 
-double numode_total_beam_bg(bool verbose=true)
+double numode_total_beam_bg(double* error=0, bool verbose=true)
 {
-    double beamnue_background = numode_beamnue_bg(verbose);
-    double beamnuebar_background = numode_beamnuebar_bg(verbose);
+    double nue_error = 0;
+    double nuebar_error = 0;
+    double beamnue_background = numode_beamnue_bg(&nue_error, verbose);
+    double beamnuebar_background = numode_beamnuebar_bg(&nuebar_error, verbose);
     double total_bg = beamnue_background + beamnuebar_background;
+    if(error != 0)
+    {
+        (*error) = TMath::Hypot(nue_error, nuebar_error);
+    }
     if(verbose)
     {
         std::cout << "total beam background: " << total_bg << "\n";
+        if(error != 0)
+        {
+            std::cout << "total error: +/- " << (*error) << "\n";
+        }
     }
     return total_bg;
 }
 
-double numode_nutauCC_bg(bool verbose=true)
+double numode_nutauCC_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_numuflux_nutau_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_numuflux_nutau__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * cc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "nutau CC background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_numuflux_nutau",
+            "cc",
+            "nutau CC bg",
+            error,
+            verbose
+    );
 }
 
-double numode_nutaubarCC_bg(bool verbose=true)
+double numode_nutaubarCC_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_numubarflux_nutaubar_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_numubarflux_nutaubar__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * cc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "nutaubar CC background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_numubarflux_nutaubar",
+            "cc",
+            "nutaubar CC bg",
+            error,
+            verbose
+    );
 }
 
-double numode_total_nutau_bg(bool verbose=true)
+double numode_total_nutau_bg(double* error=0, bool verbose=true)
 {
-    double nutau_background = numode_nutauCC_bg(verbose);
-    double nutaubar_background = numode_nutaubarCC_bg(verbose);
+    double tau_error = 0;
+    double taubar_error = 0;
+    double nutau_background = numode_nutauCC_bg(&tau_error, verbose);
+    double nutaubar_background = numode_nutaubarCC_bg(&taubar_error, verbose);
     double total_bg = nutau_background + nutaubar_background;
+    if(error != 0)
+    {
+        (*error) = TMath::Hypot(tau_error, taubar_error);
+    }
     if(verbose)
     {
         std::cout << "total nutau background: " << total_bg << "\n";
+        if(error != 0)
+        {
+            std::cout << "total error: +/- " << (*error) << "\n";
+        }
     }
     return total_bg;
 }
 
-double numode_numuCC_bg(bool verbose=true)
+double numode_numuCC_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_numuflux_numu_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_numuflux_numu__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * cc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "numu CC background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_numuflux_numu",
+            "cc",
+            "numu CC bg",
+            error,
+            verbose
+    );
 }
 
-double numode_numubarCC_bg(bool verbose=true)
+double numode_numubarCC_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_numubarflux_numubar_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_numubarflux_numubar__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * cc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "numubar CC background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_numubarflux_numubar",
+            "cc",
+            "numubar CC bg",
+            error,
+            verbose
+    );
 }
 
-double numode_total_numu_bg(bool verbose=true)
+double numode_total_numu_bg(double* error=0, bool verbose=true)
 {
-    double numu_background = numode_numuCC_bg(verbose);
-    double numubar_background = numode_numubarCC_bg(verbose);
+    double mu_error = 0;
+    double mubar_error = 0;
+    double numu_background = numode_numuCC_bg(&mu_error, verbose);
+    double numubar_background = numode_numubarCC_bg(&mubar_error, verbose);
     double total_bg = numu_background + numubar_background;
+    if(error != 0)
+    {
+        (*error) = TMath::Hypot(mu_error, mubar_error);
+    }
     if(verbose)
     {
         std::cout << "total numu background: " << total_bg << "\n";
+        if(error != 0)
+        {
+            std::cout << "total error: +/0 " << (*error) << "\n";
+        }
     }
     return total_bg;
 }
 
-double numode_nueNC_bg(bool verbose=true)
+double numode_nueNC_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_numuflux_nue_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_numuflux_nue__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * nc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "nue NC background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_numuflux_nue",
+            "nc",
+            "nue NC bg",
+            error,
+            verbose
+    );
 }
 
-double numode_beamnueNC_bg(bool verbose=true)
+double numode_beamnueNC_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_nueflux_nue_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_nueflux_nue__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * nc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "beam nue NC background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_nueflux_nue",
+            "nc",
+            "beam nue NC bg",
+            error,
+            verbose
+    );
 }
 
-double numode_nuebarNC_bg(bool verbose=true)
+double numode_nuebarNC_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_numubarflux_nuebar_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_numubarflux_nuebar__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * nc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "nuebar NC background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_numubarflux_nuebar",
+            "nc",
+            "nuebar NC bg",
+            error,
+            verbose
+    );
 }
 
-double numode_beamnuebarNC_bg(bool verbose=true)
+double numode_beamnuebarNC_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_nuebarflux_nuebar_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_nuebarflux_nuebar__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * nc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "beam nuebar NC background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_nuebarflux_nuebar",
+            "nc",
+            "beam nuebar NC bg",
+            error,
+            verbose
+    );
 }
 
-double numode_numuNC_bg(bool verbose=true)
+double numode_numuNC_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_numuflux_numu_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_numuflux_numu__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * nc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "numu NC background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_numuflux_numu",
+            "nc",
+            "numu NC bg",
+            error,
+            verbose
+    );
 }
 
-double numode_numubarNC_bg(bool verbose=true)
+double numode_numubarNC_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_numubarflux_numubar_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_numubarflux_numubar__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * nc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "numubar NC background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_numubarflux_numubar",
+            "nc",
+            "numubar NC bg",
+            error,
+            verbose
+    );
 }
 
-double numode_nutauNC_bg(bool verbose=true)
+double numode_nutauNC_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_numuflux_nutau_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_numuflux_nutau__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * nc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "nutau NC background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_numuflux_nutau",
+            "nc",
+            "nutau NC bg",
+            error,
+            verbose
+    );
 }
 
-double numode_nutaubarNC_bg(bool verbose=true)
+double numode_nutaubarNC_bg(double* error=0, bool verbose=true)
 {
-    TFile* fin = TFile::Open((FMCFOLDER + "fastmcNtp_20160404_lbne_g4lbnev3r2p4b_nuflux_numubarflux_nutaubar_LAr_1_g280_Ar40_5000_GENIE_2100.root").c_str(), "READ");
-    TTree* fmcdata = (TTree*) fin->Get("gst");
-    fmcdata->AddFriend("OSCPROB", (OSCPROBFOLDER + "nuflux_numubarflux_nutaubar__OSCPROB.root").c_str());
-    long num_events = fmcdata->GetEntries();
-    TH1D* hist = new TH1D("h", "h", 100, 0.5, 8);
-    fmcdata->Draw("Ev_reco>>h", Form("%s*%s*%s * nc * %s/%d", OSC_PROBABILITY, ENERGY_CUT, NORMALIZATION, EVENTCUT_NUE, num_events));
-    double num_signal_events = hist->Integral();
-    if(verbose)
-    {
-        std::cout << "nutaubar NC background: " << num_signal_events << "\n";
-    }
-    fin->Close();
-    return num_signal_events;
+    return get_events(
+            "nuflux_numubarflux_nutaubar",
+            "nc",
+            "nutaubar NC bg",
+            error,
+            verbose
+    );
 }
 
-double numode_total_NC_bg(bool verbose=true)
+double numode_total_NC_bg(double* error=0, bool verbose=true)
 {
-    double nue_bg = numode_nueNC_bg(verbose);
-    double beamnue_bg = numode_beamnueNC_bg(verbose);
-    double numu_bg = numode_numuNC_bg(verbose);
-    double nutau_bg = numode_nutauNC_bg(verbose);
-    double nuebar_bg = numode_nuebarNC_bg(verbose);
-    double beamnuebar_bg = numode_beamnuebarNC_bg(verbose);
-    double numubar_bg = numode_numubarNC_bg(verbose);
-    double nutaubar_bg = numode_nutaubarNC_bg(verbose);
+    double e_error = 0;
+    double beame_error = 0;
+    double mu_error = 0;
+    double tau_error = 0;
+    double ebar_error = 0;
+    double beamebar_error = 0;
+    double mubar_error = 0;
+    double taubar_error = 0;
+    double nue_bg = numode_nueNC_bg(&e_error, verbose);
+    double beamnue_bg = numode_beamnueNC_bg(&beame_error, verbose);
+    double numu_bg = numode_numuNC_bg(&mu_error, verbose);
+    double nutau_bg = numode_nutauNC_bg(&tau_error, verbose);
+    double nuebar_bg = numode_nuebarNC_bg(&ebar_error, verbose);
+    double beamnuebar_bg = numode_beamnuebarNC_bg(&beamebar_error, verbose);
+    double numubar_bg = numode_numubarNC_bg(&mubar_error, verbose);
+    double nutaubar_bg = numode_nutaubarNC_bg(&taubar_error, verbose);
     double total_bg = nue_bg + beamnue_bg + numu_bg + nutau_bg +
         nuebar_bg + beamnuebar_bg + numubar_bg + nutaubar_bg;
+    if(error != 0)
+    {
+        (*error) = TMath::Sqrt(
+                e_error*e_error +
+                beame_error*beame_error +
+                mu_error*mu_error +
+                tau_error*tau_error +
+                ebar_error*ebar_error +
+                beamebar_error*beamebar_error +
+                mubar_error*mubar_error +
+                taubar_error*taubar_error
+        );
+    }
     if(verbose)
     {
         std::cout << "total NC background: " << total_bg << "\n";
+        if(error != 0)
+        {
+            std::cout << "total error: +/0 " << (*error) << "\n";
+        }
     }
     return total_bg;
 }
