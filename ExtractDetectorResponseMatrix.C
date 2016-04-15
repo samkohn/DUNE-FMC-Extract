@@ -71,38 +71,6 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
             fluxData->Draw((std::string("Ev_reco:Ev>>") + fluxtype).c_str(), (eventcut + " && cc").c_str(), "colz");
             enuresponse->GetXaxis()->SetTitle("E_{#nu} [GeV]");
             enuresponse->GetYaxis()->SetTitle("E_{#nu, reco} [GeV]");
-            double nentries = enuresponse->Integral();
-            TH1D* normalizationHist = new TH1D("norm", "norm", 1, YMIN, YMAX);
-            fluxData->Draw("Ev>>norm", "cc");
-            double nentriesForAll = normalizationHist->Integral();
-            double fractionOfAll = nentries/nentriesForAll;
-            std::cout << "fractionOfAll = " << fractionOfAll << std::endl;
-            enuresponse->Scale(1.0/nentries); // Normalize
-            //c1->Print((std::string("~/outputs/detector-response/") + fluxtype + eventcutname + "_trueNC.pdf").c_str());
-            // Normalize the columns of the histogram individually to get
-            // the matrix
-            double values[YBINS];
-            for(int column = 1; column <= XBINS; ++column)
-            {
-                double sum = 0;
-                for(int row = 1; row <= YBINS; ++row)
-                {
-                    values[row-1] = enuresponse->GetBinContent(column, row);
-                    sum += values[row-1];
-                }
-                if(TMath::Abs(sum - 0) < 0.000001)
-                {
-                    // Then all of the bins have 0 content so leave them
-                    // alone
-                }
-                else
-                {
-                    for(int row = 1; row <= YBINS; ++row)
-                    {
-                        enuresponse->SetBinContent(column, row, values[row-1]*fractionOfAll/sum);
-                    }
-                }
-            }
             // Print out the matrix information
             std::ofstream outputfile;
             char outputdir[100];
