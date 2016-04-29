@@ -55,8 +55,8 @@ int ExtractBeamFluxes(const int NBINS, const double EMIN,
         TGraph* spectrum_gr = new TGraph(spectrum->GetNbinsX(), spectrumx, spectrumy);
         // Dump the results to a CSV file
         std::ofstream outputfile;
-        outputfile.open((std::string("/afs/fnal.gov/files/home/room3/") + 
-                    "skohn/outputs/beam-flux-CD1CDR/" + histname +
+        outputfile.open((std::string("/nashome/s/") +
+                    "skohn/outputs/120/flux/" + histname +
                     Form("%d_%snumode.csv", NBINS, isNuMode?"":"a")).c_str());
         if(!outputfile.is_open())
         {

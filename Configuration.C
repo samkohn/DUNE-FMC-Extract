@@ -8,7 +8,7 @@
 
 char* CFG_OutputDirectory(char* dir)
 {
-    return strcpy(dir, "/afs/fnal.gov/files/home/room3/skohn/DUNE-configs/Fast-Monte-Carlo/");
+    return strcpy(dir, "/nashome/s/skohn/outputs/");
 }
 
 #endif

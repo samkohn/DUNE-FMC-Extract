@@ -23,7 +23,7 @@
  * i.e. events that could be confused with a true nueCC interaction.
  */
 const char* FMCFOLDER = "/dune/data/users/lblpwg_tools/FastMC_Data/outputs/cherdack/v3r2p4b/nominal/";
-const char* OSCPROBFOLDER = "/afs/fnal.gov/files/home/room3/skohn/outputs/oscprob2/";
+const char* OSCPROBFOLDER = "/nashome/s/skohn/outputs/oscprob2/";
 const char* EVENTCUT_NUE = "(EvClass_reco == 1 && Tau_Prob_nue > 0.6 && NC_Prob_nue > 0.75)";
 const char* NORMALIZATION = "(POTWeight * POTperYear * 3.125 * 40)";
 const char* ENERGY_CUT = "(Ev_reco < 8 && Ev_reco > 0.5)";
