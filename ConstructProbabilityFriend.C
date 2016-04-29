@@ -74,8 +74,8 @@ int ConstructProbabilityFriend()
     neutrinoendspecies.push_back(3);
     neutrinoendspecies.push_back(-3);
     std::string prefix = "/dune/data/users/lblpwg_tools/FastMC_Data/outputs/cherdack/v3r2p4b/nominal";
-    prefix.append("/fastmcNtp_20160105_lbne_g4lbnev3r2p4b_");
-    std::string suffix = "_LAr_1_g280_Ar40_5000_GENIE_2100_Test.root";
+    prefix.append("/fastmcNtp_20160404_lbne_g4lbnev3r2p4b_");
+    std::string suffix = "_LAr_1_g280_Ar40_5000_GENIE_2100.root";
     std::vector<std::string>::iterator it = filenames.begin();
     std::vector<int>::iterator startit = neutrinostartspecies.begin();
     std::vector<int>::iterator endit = neutrinoendspecies.begin();
@@ -102,7 +102,7 @@ int ConstructProbabilityFriend()
             continue;
         }
         TFile* fout = TFile::Open((std::string(CFG_OutputDirectory(outputdir)) +
-                "oscprob/" + temp + "__OSCPROB.root").c_str(), "RECREATE");
+                "oscprob2/" + temp + "__OSCPROB.root").c_str(), "RECREATE");
         TTree* oscprob = new TTree("OSCPROB",
                 "Oscillation Probabilities for FMC events");
         double probability = 0;

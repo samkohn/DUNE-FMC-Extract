@@ -49,7 +49,7 @@ int CreateOscillationVectors(const size_t NBINS, const double EMIN,
     const double dcp = 0.0;
     char outputdir[100];
     std::string foutprefix = std::string(CFG_OutputDirectory(outputdir)) +
-                        "80/oscvectors/";
+                        "120/oscvectors/";
     std::string fileheader = "# Capozzi et al. [arXiv:1312.2878v2] NO 2013";
 
     return CreateOscillationVectorsDriver(NBINS, EMIN, EMAX, foutprefix,
@@ -106,7 +106,7 @@ int CreateManyOscillationVectors(const size_t NBINS, const double EMIN,
                             ++paramSetCount;
                             char foldername[100];
                             char outputdir[100];
-                            sprintf(foldername, "oscvectorsets/oscvectors_%d/", paramSetCount);
+                            sprintf(foldername, "120/oscvectorsets/oscvectors_%d/", paramSetCount);
                             std::string foutprefix(CFG_OutputDirectory(outputdir));
                             foutprefix += foldername;
 

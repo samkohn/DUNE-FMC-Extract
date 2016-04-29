@@ -29,8 +29,8 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
     eventcutnames.push_back("_nueCC-like");
     eventcutnames.push_back("_NC-like");
     std::string prefix = "/dune/data/users/lblpwg_tools/FastMC_Data/outputs/cherdack/v3r2p4b/nominal";
-    prefix.append("/fastmcNtp_20160105_lbne_g4lbnev3r2p4b_");
-    std::string suffix = "_LAr_1_g280_Ar40_5000_GENIE_2100_Test.root";
+    prefix.append("/fastmcNtp_20160404_lbne_g4lbnev3r2p4b_");
+    std::string suffix = "_LAr_1_g280_Ar40_5000_GENIE_2100.root";
     for(size_t i = 0; i < eventcuts.size(); ++i)
     {
         std::string eventcutname = eventcutnames.at(i);
@@ -75,7 +75,7 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
             std::ofstream outputfile;
             char outputdir[100];
             outputfile.open((std::string(CFG_OutputDirectory(outputdir)) +
-                        "detector-response/" + fluxtype + eventcutname +
+                        "120/detector-response/" + fluxtype + eventcutname +
                         Form("_trueCC%d.csv", NBINSSQUARE)).c_str());
             if(!outputfile.is_open())
             {

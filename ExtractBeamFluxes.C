@@ -11,7 +11,7 @@ int ExtractBeamFluxes(const int NBINS, const double EMIN,
 
     char outputdir[100];
     std::string filename = std::string(CFG_OutputDirectory(outputdir)) +
-        "fmcCD1CDRflux/v3r2p4b/NuMI_Improved_120GeV_StandardDP/";
+        "fmcnominalflux/v3r2p4b/nominal/";
     if(isNuMode)
     {
         filename += "g4lbne_v3r2p4b_FHC_FD_RIK.root";

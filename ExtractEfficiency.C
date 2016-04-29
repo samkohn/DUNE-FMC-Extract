@@ -79,7 +79,7 @@ int ExtractEfficiency(const int NBINSSQUARE)
             std::ofstream outputfile;
             char outputdir[100];
             outputfile.open((std::string(CFG_OutputDirectory(outputdir)) +
-                        "efficiencies2/" + fluxtype + eventcutname +
+                        "120/efficiencies/" + fluxtype + eventcutname +
                         Form("_trueCC%d.csv", NBINSSQUARE)).c_str());
             if(!outputfile.is_open())
             {

@@ -16,7 +16,7 @@ int ExtractCrossSectionVector(std::string interaction_class, std::string xsec_ty
     //std::string xsec_type = "tot_nc";
     const double MINE = 0; //GeV
     const double MAXE = 10;
-    const int EBINS = 40;
+    const int EBINS = 120;
     const double ESTEP = (MAXE - MINE)/EBINS;
     TFile* fin = TFile::Open((inputfiledir + inputfile).c_str(), "READ");
     if(!fin)
@@ -44,7 +44,7 @@ int ExtractCrossSectionVector(std::string interaction_class, std::string xsec_ty
     std::ofstream outputfile;
     char outputdir[100];
     outputfile.open((std::string(CFG_OutputDirectory(outputdir)) +
-                "cross-sections/" + interaction_class + "__" +
+                "120/cross-sections/" + interaction_class + "__" +
                 xsec_type + Form("%d.csv", EBINS)).c_str());
     if(!outputfile.is_open())
     {
@@ -70,7 +70,7 @@ int ExtractCrossSectionVector(std::string interaction_class, std::string xsec_ty
     outputfile.close();
     // Check to see if the energy list exists
     std::string energylistname = std::string(outputdir)
-        + "cross-sections/" + Form("energies%d.csv", EBINS);
+        + "120/cross-sections/" + Form("energies%d.csv", EBINS);
     struct stat buffer;
     if(stat (energylistname.c_str(), &buffer) == 0)
     {
