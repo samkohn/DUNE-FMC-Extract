@@ -82,6 +82,10 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
                 std::cout << "ERROR\n";
                 return 0;
             }
+            std::string outputheader = "# Source: " + filename;
+            outputheader += "\n# Event cuts: " + eventcut;
+            outputheader += "\n# True event type: cc\n";
+            outputfile << outputheader;
             for(int row = 1; row <= YBINS; ++row)
             {
                 for(int column = 1; column <= XBINS; ++column)

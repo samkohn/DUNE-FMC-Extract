@@ -12,6 +12,7 @@ int ExtractCrossSectionVector(std::string interaction_class, std::string xsec_ty
     std::string inputfile = "gxspl-big.root";
     std::string inputfiledir = "/dune/app/users/lblpwg_tools/";
     inputfiledir += "SOFTWARE/genie-2.10.0-20151103/splines/";
+    std::string outputheader = "# Source: GENIE 2.10.0 splines\n";
     //std::string interaction_class = "nu_e_Ar40";
     //std::string xsec_type = "tot_nc";
     const double MINE = 0; //GeV
@@ -55,6 +56,7 @@ int ExtractCrossSectionVector(std::string interaction_class, std::string xsec_ty
     {
         std::cout << "INFO: Opened output file\n";
     }
+    outputfile << outputheader;
     double energy = MINE + ESTEP/2;
     size_t nentry = 0;
     double value = xsecgraph->Eval(energy);

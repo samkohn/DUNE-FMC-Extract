@@ -10,15 +10,18 @@ int ExtractBeamFluxes(const int NBINS, const double EMIN,
 {
 
     char outputdir[100];
+    std::string outputheader = "# Source: FMC input flux v3r2p4b nominal\n";
     std::string filename = std::string(CFG_OutputDirectory(outputdir)) +
         "fmcnominalflux/v3r2p4b/nominal/";
     if(isNuMode)
     {
         filename += "g4lbne_v3r2p4b_FHC_FD_RIK.root";
+        outputheader += "# neutrino mode (FHC)\n";
     }
     else
     {
         filename += "g4lbne_v3r2p4b_RHC_FD_RIK.root";
+        outputheader += "# antineutrino mode (RHC)\n";
     }
     TFile* fin = TFile::Open(filename.c_str(), "READ");
     if(!fin)
@@ -67,6 +70,7 @@ int ExtractBeamFluxes(const int NBINS, const double EMIN,
         {
             std::cout << "INFO: Opened output file\n";
         }
+        outputfile << outputheader;
         const double ESTEP = (EMAX - EMIN)/NBINS;
         for(size_t ebin = 0; ebin < NBINS; ++ebin)
         {
