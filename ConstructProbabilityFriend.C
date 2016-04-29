@@ -94,7 +94,13 @@ int ConstructProbabilityFriend()
         int neutrinoend = *endit;
 
         // Set up the output tree
-        char ouptutdir[100];
+        char outputdir[100];
+        TFile* trialfile = TFile::Open((std::string(CFG_OutputDirectory(outputdir)) +
+                    "oscprob2/" + temp + "__OSCPROB.root").c_str(), "READ");
+        if(trialfile != 0)
+        {
+            continue;
+        }
         TFile* fout = TFile::Open((std::string(CFG_OutputDirectory(outputdir)) +
                 "oscprob/" + temp + "__OSCPROB.root").c_str(), "RECREATE");
         TTree* oscprob = new TTree("OSCPROB",
