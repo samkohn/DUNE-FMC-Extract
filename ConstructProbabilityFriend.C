@@ -11,13 +11,13 @@
 
 int ConstructProbabilityFriend()
 {
-    // Oscprobs from Nu-Fit  JHEP 11 (2014) 052 [arXiv:1409.5439]
+    // Oscprobs from Capozi et al. (used in CDR)
     // I am assuming normal ordering, delta-cp = 0
-    const double x13 = 0.0218; // sin^2(x)
-    const double x12 = 0.304; // sin^2(x)
-    const double x23 = 0.452; // sin^2(x)
-    const double dm21 = 0.0000750; // eV^2
-    const double dm31 = 0.002457; // eV^2
+    const double x13 = 0.0234; // sin^2(x)
+    const double x12 = 0.308; // sin^2(x)
+    const double x23 = 0.437; // sin^2(x)
+    const double dm21 = 0.0000754; // eV^2
+    const double dm31 = 0.00243; // eV^2
     const double dcp = 0.0;
     const bool THETA_STYLE = true;
     const double BASELINE = 1300; // km

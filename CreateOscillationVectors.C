@@ -30,6 +30,7 @@ int CreateOscillationVectorsDriver(const size_t NBINS, const double EMIN,
 int CreateOscillationVectors(const size_t NBINS, const double EMIN,
         const double EMAX)
 {
+    /*
     // Oscprobs from Nu-Fit  JHEP 11 (2014) 052 [arXiv:1409.5439]
     // I am assuming normal ordering, delta-cp = 0
     const double x13 = 0.0218; // sin^2(x)
@@ -37,11 +38,19 @@ int CreateOscillationVectors(const size_t NBINS, const double EMIN,
     const double x23 = 0.452; // sin^2(x)
     const double dm21 = 0.0000750; // eV^2
     const double dm31 = 0.002457; // eV^2
+    */
+    // Oscprobs from Capozi et al. (used in CDR)
+    // I am assuming normal ordering, delta-cp = 0
+    const double x13 = 0.0234; // sin^2(x)
+    const double x12 = 0.308; // sin^2(x)
+    const double x23 = 0.437; // sin^2(x)
+    const double dm21 = 0.0000754; // eV^2
+    const double dm31 = 0.00243; // eV^2
     const double dcp = 0.0;
     char outputdir[100];
     std::string foutprefix = std::string(CFG_OutputDirectory(outputdir)) +
-                        "oscvectors/";
-    std::string fileheader = "# Nu-Fit JHEP 11 (2014) 052 [arXiv:1409.5439] NO";
+                        "80/oscvectors/";
+    std::string fileheader = "# Capozzi et al. [arXiv:1312.2878v2] NO 2013";
 
     return CreateOscillationVectorsDriver(NBINS, EMIN, EMAX, foutprefix,
             x13, x12, x23, dm21, dm31, dcp, fileheader);
