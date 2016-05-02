@@ -21,8 +21,8 @@ int ExtractEfficiency(const int NBINSSQUARE)
     filenames.push_back("anuflux_numuflux_nutau");
     filenames.push_back("anuflux_numubarflux_nutaubar");
     std::vector<std::string> eventcuts;
-    eventcuts.push_back("EvClass_reco == 0");
-    eventcuts.push_back("EvClass_reco == 1");
+    eventcuts.push_back("(EvClass_reco == 0 && Tau_Prob_numu > 0.2 && NC_Prob_numu > 0.2)");
+    eventcuts.push_back("(EvClass_reco == 1 && Tau_Prob_nue > 0.6 && NC_Prob_nue > 0.75)");
     eventcuts.push_back("EvClass_reco == 2");
     std::vector<std::string> eventcutnames;
     eventcutnames.push_back("_numuCC-like");
