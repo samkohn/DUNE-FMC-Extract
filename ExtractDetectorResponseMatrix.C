@@ -50,7 +50,8 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE, std::string channel, bo
         eventcutnames.push_back("_nueCC-like");
         eventcutnames.push_back("_NC-like");
     }
-    std::string prefix = "/dune/data/users/lblpwg_tools/FastMC_Data/outputs/cherdack/v3r2p4b/nominal";
+    std::string prefix = CFG_InputDir + CFG_IDRMDir;
+    //std::string prefix = "/dune/data/users/lblpwg_tools/FastMC_Data/outputs/cherdack/v3r2p4b/nominal";
     prefix.append("/fastmcNtp_20160404_lbne_g4lbnev3r2p4b_");
     std::string suffix = "_LAr_1_g280_Ar40_5000_GENIE_2100.root";
     for(size_t i = 0; i < eventcuts.size(); ++i)
@@ -102,10 +103,9 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE, std::string channel, bo
             enuresponse->GetYaxis()->SetTitle("E_{#nu, reco} [GeV]");
             // Print out the matrix information
             std::ofstream outputfile;
-            char outputdir[100];
-            std::string outfilename(std::string(CFG_OutputDirectory(outputdir)) +
-                        "test/detector-response/" + fluxtype + eventcutname +
-                        Form("_true%s%d.csv", channel_caps.c_str(), NBINSSQUARE));
+            std::string outfilename = CFG_OutputDir + CFG_DRMDir +
+                        fluxtype + eventcutname + Form("_true%s%d.csv",
+                                channel_caps.c_str(), NBINSSQUARE);
             outputfile.open(outfilename.c_str());
             if(outputfile.is_open())
             {

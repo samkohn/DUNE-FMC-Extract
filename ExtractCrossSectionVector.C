@@ -4,8 +4,6 @@
  */
 // The two includes sys/stat.h and unistd.h are for utiliities that
 // check whether a file exists (the "stat buffer" thing).
-#include <sys/stat.h>
-#include <unistd.h>
 #include "Configuration.C"
 int ExtractAllCrossSections(const int EBINS, const double MINE, const double MAXE)
 {
@@ -34,8 +32,9 @@ int ExtractCrossSectionVector(const int EBINS, const double MINE, const double M
         std::string interaction_class, std::string xsec_type)
 {
     std::string inputfile = "gxspl-big.root";
-    std::string inputfiledir = "/dune/app/users/lblpwg_tools/";
-    inputfiledir += "SOFTWARE/genie-2.10.0-20151103/splines/";
+    std::string inputfiledir = CFG_InputDir + CFG_IXSecDir;
+    //std::string inputfiledir = "/dune/app/users/lblpwg_tools/";
+    //inputfiledir += "SOFTWARE/genie-2.10.0-20151103/splines/";
     std::string outputheader = "# Source: GENIE 2.10.0 splines\n";
     //std::string interaction_class = "nu_e_Ar40";
     //std::string xsec_type = "tot_nc";
@@ -69,10 +68,8 @@ int ExtractCrossSectionVector(const int EBINS, const double MINE, const double M
         std::cout << "INFO: Found desired graph." << std::endl;
     }
     std::ofstream outputfile;
-    char outputdir[100];
-    outputfile.open((std::string(CFG_OutputDirectory(outputdir)) +
-                "120/cross-sections/" + interaction_class + "__" +
-                xsec_type + Form("%d.csv", EBINS)).c_str());
+    outputfile.open((CFG_OutputDir + CFG_XSecDir + interaction_class +
+            "__" + xsec_type + Form("%d.csv", EBINS)).c_str());
     if(!outputfile.is_open())
     {
         std::cout << "ERROR: Could not open file\n";
@@ -96,28 +93,5 @@ int ExtractCrossSectionVector(const int EBINS, const double MINE, const double M
         ++nentry;
     }
     outputfile.close();
-    // Check to see if the energy list exists
-    std::string energylistname = std::string(outputdir)
-        + "120/cross-sections/" + Form("energies%d.csv", EBINS);
-    struct stat buffer;
-    if(stat (energylistname.c_str(), &buffer) == 0)
-    {
-        std::cout << "INFO: Energy file already exists." << std::endl;
-        return 0;
-    }
-    else
-    {
-        std::cout << "INFO: Creating energy file." << std::endl;
-        outputfile.open(energylistname.c_str());
-        energy = MINE+ ESTEP/2;
-        outputfile << energy;
-        energy += ESTEP;
-        while(energy < MAXE)
-        {
-            outputfile << ", " << energy;
-            energy += ESTEP;
-        }
-        outputfile.close();
-    }
     return 0;
 }

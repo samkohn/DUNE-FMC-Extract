@@ -9,10 +9,8 @@ int ExtractBeamFluxes(const int NBINS, const double EMIN,
         const double EMAX, bool isNuMode=true)
 {
 
-    char outputdir[100];
     std::string outputheader = "# Source: FMC input flux v3r2p4b nominal\n";
-    std::string filename = std::string(CFG_OutputDirectory(outputdir)) +
-        "fmcnominalflux/v3r2p4b/nominal/";
+    std::string filename = CFG_InputDir + CFG_IFluxDir;
     if(isNuMode)
     {
         filename += "g4lbne_v3r2p4b_FHC_FD_RIK.root";
@@ -58,8 +56,7 @@ int ExtractBeamFluxes(const int NBINS, const double EMIN,
         TGraph* spectrum_gr = new TGraph(spectrum->GetNbinsX(), spectrumx, spectrumy);
         // Dump the results to a CSV file
         std::ofstream outputfile;
-        outputfile.open((std::string("/nashome/s/") +
-                    "skohn/outputs/120/flux/" + histname +
+        outputfile.open((CFG_OutputDir + CFG_FluxDir + histname +
                     Form("%d_%snumode.csv", NBINS, isNuMode?"":"a")).c_str());
         if(!outputfile.is_open())
         {
