@@ -7,7 +7,31 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "Configuration.C"
-int ExtractCrossSectionVector(std::string interaction_class, std::string xsec_type)
+int ExtractAllCrossSections(const int EBINS, const double MINE, const double MAXE)
+{
+    std::vector<std::string> interaction_classes;
+    std::vector<std::string> xsec_types;
+    interaction_classes.push_back("nu_e_Ar40");
+    interaction_classes.push_back("nu_e_bar_Ar40");
+    interaction_classes.push_back("nu_mu_Ar40");
+    interaction_classes.push_back("nu_mu_bar_Ar40");
+    interaction_classes.push_back("nu_tau_Ar40");
+    interaction_classes.push_back("nu_tau_bar_Ar40");
+    xsec_types.push_back("tot_nc");
+    xsec_types.push_back("tot_cc");
+    for(size_t i = 0; i < interaction_classes.size(); ++i)
+    {
+        for(size_t j = 0; j < xsec_types.size(); ++j)
+        {
+            ExtractCrossSectionVector(EBINS, MINE, MAXE, interaction_classes.at(i),
+                    xsec_types.at(j));
+        }
+    }
+    return 0;
+
+}
+int ExtractCrossSectionVector(const int EBINS, const double MINE, const double MAXE,
+        std::string interaction_class, std::string xsec_type)
 {
     std::string inputfile = "gxspl-big.root";
     std::string inputfiledir = "/dune/app/users/lblpwg_tools/";
@@ -15,9 +39,11 @@ int ExtractCrossSectionVector(std::string interaction_class, std::string xsec_ty
     std::string outputheader = "# Source: GENIE 2.10.0 splines\n";
     //std::string interaction_class = "nu_e_Ar40";
     //std::string xsec_type = "tot_nc";
+    /*
     const double MINE = 0; //GeV
     const double MAXE = 10;
     const int EBINS = 120;
+    */
     const double ESTEP = (MAXE - MINE)/EBINS;
     TFile* fin = TFile::Open((inputfiledir + inputfile).c_str(), "READ");
     if(!fin)
