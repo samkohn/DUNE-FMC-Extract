@@ -1,8 +1,22 @@
 #include <fstream>
 #include "Configuration.C"
 #include <TCut.h>
-int ExtractEfficiency(const int NBINSSQUARE)
+int ExtractEfficiency(const int NBINSSQUARE, std::string channel)
 {
+    std::string channel_caps;
+    if(channel.compare("cc") == 0)
+    {
+        channel_caps = "CC";
+    }
+    else if(channel.compare("nc") == 0)
+    {
+        channel_caps = "NC";
+    }
+    else
+    {
+        std::cout << "ERROR: invalid channel (" << channel << ")\n";
+        return 1;
+    }
     std::vector<std::string> filenames;
     filenames.push_back("nuflux_numuflux_numu");
     filenames.push_back("nuflux_nueflux_nue");
@@ -67,7 +81,7 @@ int ExtractEfficiency(const int NBINSSQUARE)
             enuresponse->GetYaxis()->SetTitleSize(0.05);
             enuresponse->GetXaxis()->SetTitleOffset(0.9);
             enuresponse->GetYaxis()->SetTitleOffset(1.1);
-            fluxData->Draw((std::string("Ev_reco>>") + fluxtype).c_str(), (eventcut + " && cc").c_str());
+            fluxData->Draw((std::string("Ev_reco>>") + fluxtype).c_str(), (eventcut + " && " + channel).c_str());
             enuresponse->GetXaxis()->SetTitle("E_{#nu, reco} [GeV]");
             enuresponse->GetYaxis()->SetTitle("Number of events");
             double nentries = enuresponse->Integral();
@@ -79,16 +93,16 @@ int ExtractEfficiency(const int NBINSSQUARE)
             std::ofstream outputfile;
             char outputdir[100];
             outputfile.open((std::string(CFG_OutputDirectory(outputdir)) +
-                        "120/efficiencies/" + fluxtype + eventcutname +
-                        Form("_trueCC%d.csv", NBINSSQUARE)).c_str());
+                        "v3.0_params/efficiencies/" + fluxtype + eventcutname +
+                        Form("_true%s%d.csv", channel_caps, NBINSSQUARE)).c_str());
             if(!outputfile.is_open())
             {
                 std::cout << "ERROR\n";
                 return 0;
             }
             std::string outputheader = "# Source: " + filename;
-            outputheader += "\n# Event cuts: " + eventcut;
-            outputheader += "\n# True event type: cc\n";
+            outputheader += "\n# Event cuts: " + eventcut + " && " + channel;
+            outputheader += "\n# True event type: " + channel + "\n";
             outputfile << outputheader;
             for(int column = 1; column <= XBINS; ++column)
             {
