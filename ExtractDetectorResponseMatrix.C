@@ -1,8 +1,22 @@
 #include <fstream>
 #include "Configuration.C"
 #include <TCut.h>
-int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
+int ExtractDetectorResponseMatrix(const int NBINSSQUARE, std::string channel, bool factored=false)
 {
+    std::string channel_caps;
+    if(channel.compare("cc") == 0)
+    {
+        channel_caps = "CC";
+    }
+    else if(channel.compare("nc") == 0)
+    {
+        channel_caps = "NC";
+    }
+    else
+    {
+        std::cout << "ERROR: invalid channel (" << channel << ")\n";
+        return 1;
+    }
     std::vector<std::string> filenames;
     filenames.push_back("nuflux_numuflux_numu");
     filenames.push_back("nuflux_nueflux_nue");
@@ -21,13 +35,21 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
     filenames.push_back("anuflux_numuflux_nutau");
     filenames.push_back("anuflux_numubarflux_nutaubar");
     std::vector<std::string> eventcuts;
-    eventcuts.push_back("(EvClass_reco == 0 && Tau_Prob_numu > 0.2 && NC_Prob_numu > 0.2)");
-    eventcuts.push_back("(EvClass_reco == 1 && Tau_Prob_nue > 0.6 && NC_Prob_nue > 0.75)");
-    eventcuts.push_back("(EvClass_reco == 2)");
     std::vector<std::string> eventcutnames;
-    eventcutnames.push_back("_numuCC-like");
-    eventcutnames.push_back("_nueCC-like");
-    eventcutnames.push_back("_NC-like");
+    if(factored)
+    {
+        eventcuts.push_back("1");
+        eventcutnames.push_back("");
+    }
+    else
+    {
+        eventcuts.push_back("(EvClass_reco == 0 && Tau_Prob_numu > 0.2 && NC_Prob_numu > 0.2)");
+        eventcuts.push_back("(EvClass_reco == 1 && Tau_Prob_nue > 0.6 && NC_Prob_nue > 0.75)");
+        eventcuts.push_back("(EvClass_reco == 2)");
+        eventcutnames.push_back("_numuCC-like");
+        eventcutnames.push_back("_nueCC-like");
+        eventcutnames.push_back("_NC-like");
+    }
     std::string prefix = "/dune/data/users/lblpwg_tools/FastMC_Data/outputs/cherdack/v3r2p4b/nominal";
     prefix.append("/fastmcNtp_20160404_lbne_g4lbnev3r2p4b_");
     std::string suffix = "_LAr_1_g280_Ar40_5000_GENIE_2100.root";
@@ -43,13 +65,20 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
             std::string filename = prefix;
             filename.append(fluxtype);
             filename.append(suffix);
-            std::cout << filename << std::endl;
+            std::cout << "INFO: Processing flux type: " << fluxtype << std::endl;
 
             // Open the file
             TFile* fin = TFile::Open(filename.c_str(), "READ");
-            std::cout << "fin = " << fin << std::endl;
+            if(fin != 0)
+            {
+                std::cout << "INFO: Opened file at " << filename << std::endl;
+            }
+            else
+            {
+                std::cout << "ERROR: Could not open file at " << filename << std::endl;
+                return 1;
+            }
             TTree* fluxData = (TTree*) fin->Get("gst");
-            std::cout << "fluxData TTree = " << fluxData << std::endl;
             TCanvas* c1 = new TCanvas();
             //const int NBINSSQUARE = 20;
             const double MINSQUARE = 0;
@@ -68,23 +97,28 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE)
             enuresponse->GetYaxis()->SetTitleSize(0.05);
             enuresponse->GetXaxis()->SetTitleOffset(0.9);
             enuresponse->GetYaxis()->SetTitleOffset(1.1);
-            fluxData->Draw((std::string("Ev_reco:Ev>>") + fluxtype).c_str(), (eventcut + " && cc").c_str(), "colz");
+            fluxData->Draw((std::string("Ev_reco:Ev>>") + fluxtype).c_str(), (eventcut + " && " + channel).c_str(), "colz");
             enuresponse->GetXaxis()->SetTitle("E_{#nu} [GeV]");
             enuresponse->GetYaxis()->SetTitle("E_{#nu, reco} [GeV]");
             // Print out the matrix information
             std::ofstream outputfile;
             char outputdir[100];
-            outputfile.open((std::string(CFG_OutputDirectory(outputdir)) +
-                        "120/detector-response/" + fluxtype + eventcutname +
-                        Form("_trueCC%d.csv", NBINSSQUARE)).c_str());
-            if(!outputfile.is_open())
+            std::string outfilename(std::string(CFG_OutputDirectory(outputdir)) +
+                        "test/detector-response/" + fluxtype + eventcutname +
+                        Form("_true%s%d.csv", channel_caps.c_str(), NBINSSQUARE));
+            outputfile.open(outfilename.c_str());
+            if(outputfile.is_open())
             {
-                std::cout << "ERROR\n";
-                return 0;
+                std::cout << "INFO: writing output to " << outfilename << "\n";
+            }
+            else
+            {
+                std::cout << "ERROR: could not open output file at " << outfilename << "\n";
+                return 1;
             }
             std::string outputheader = "# Source: " + filename;
-            outputheader += "\n# Event cuts: " + eventcut;
-            outputheader += "\n# True event type: cc\n";
+            outputheader += "\n# Event cuts: \"" + eventcut + " && " + channel + "\"";
+            outputheader += "\n# True event type: " + channel + "\n";
             outputfile << outputheader;
             for(int row = 1; row <= YBINS; ++row)
             {
