@@ -93,7 +93,7 @@ int ExtractEfficiency(const int NBINSSQUARE, std::string channel)
             std::ofstream outputfile;
             std::string outfilename(CFG_OutputDir + CFG_EffDir + fluxtype +
                         eventcutname + Form("_true%s%d.csv",
-                            channel_caps, NBINSSQUARE));
+                            channel_caps.c_str(), NBINSSQUARE));
             outputfile.open(outfilename.c_str());
             if(outputfile.is_open())
             {
