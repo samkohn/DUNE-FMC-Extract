@@ -91,10 +91,10 @@ int Extract(const int NBINS, const double EMIN, const double EMAX)
 
     // Detector Response
     std::cout << "INFO: Processing detector response\n";
-    ExtractDetectorResponseMatrix(NBINS, "cc", true);
-    ExtractDetectorResponseMatrix(NBINS, "cc", false);
-    ExtractDetectorResponseMatrix(NBINS, "nc", true);
-    ExtractDetectorResponseMatrix(NBINS, "nc", false);
+    ExtractDetectorResponseMatrix(NBINS, EMIN, EMAX, "cc", true);
+    ExtractDetectorResponseMatrix(NBINS, EMIN, EMAX, "cc", false);
+    ExtractDetectorResponseMatrix(NBINS, EMIN, EMAX, "nc", true);
+    ExtractDetectorResponseMatrix(NBINS, EMIN, EMAX, "nc", false);
     if(success == 0)
     {
         std::cout << "INFO: successfully processed detector response\n";
@@ -107,8 +107,8 @@ int Extract(const int NBINS, const double EMIN, const double EMAX)
 
     // Efficiency
     std::cout << "INFO: processing efficiency\n";
-    ExtractEfficiency(NBINS, "cc");
-    ExtractEfficiency(NBINS, "nc");
+    ExtractEfficiency(NBINS, EMIN, EMAX, "cc");
+    ExtractEfficiency(NBINS, EMIN, EMAX, "nc");
     if(success == 0)
     {
         std::cout << "INFO: successfully processed efficiency\n";

@@ -1,7 +1,9 @@
 #include <fstream>
 #include "Configuration.C"
 #include <TCut.h>
-int ExtractDetectorResponseMatrix(const int NBINSSQUARE, std::string channel, bool factored=false)
+int ExtractDetectorResponseMatrix(const int NBINSSQUARE,
+        const double EMIN, const double EMAX,
+        std::string channel, bool factored=false)
 {
     std::string channel_caps;
     if(channel.compare("cc") == 0)
@@ -82,14 +84,12 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE, std::string channel, bo
             TTree* fluxData = (TTree*) fin->Get("gst");
             TCanvas* c1 = new TCanvas();
             //const int NBINSSQUARE = 20;
-            const double MINSQUARE = 0;
-            const double MAXSQUARE = 10;
             const int XBINS = NBINSSQUARE;
             const int YBINS = NBINSSQUARE;
-            const int XMIN = MINSQUARE;
-            const int XMAX = MAXSQUARE;
-            const int YMIN = MINSQUARE;
-            const int YMAX = MAXSQUARE;
+            const int XMIN = EMIN;
+            const int XMAX = EMAX;
+            const int YMIN = EMIN;
+            const int YMAX = EMAX;
             TH2D* enuresponse = new TH2D(fluxtype.c_str(), fluxtype.c_str(), XBINS, XMIN, XMAX,
                     YBINS, YMIN, YMAX);
             enuresponse->GetXaxis()->SetLabelSize(0.05);

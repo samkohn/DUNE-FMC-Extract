@@ -1,7 +1,8 @@
 #include <fstream>
 #include "Configuration.C"
 #include <TCut.h>
-int ExtractEfficiency(const int NBINSSQUARE, std::string channel)
+int ExtractEfficiency(const int NBINSSQUARE, const double EMIN,
+        const double EMAX, std::string channel)
 {
     std::string channel_caps;
     if(channel.compare("cc") == 0)
@@ -66,14 +67,14 @@ int ExtractEfficiency(const int NBINSSQUARE, std::string channel)
             TTree* fluxData = (TTree*) fin->Get("gst");
             TCanvas* c1 = new TCanvas();
             //const int NBINSSQUARE = 20;
-            const double MINSQUARE = 0;
-            const double MAXSQUARE = 10;
+            const double EMIN = 0;
+            const double EMAX = 10;
             const int XBINS = NBINSSQUARE;
             const int YBINS = NBINSSQUARE;
-            const int XMIN = MINSQUARE;
-            const int XMAX = MAXSQUARE;
-            const int YMIN = MINSQUARE;
-            const int YMAX = MAXSQUARE;
+            const int XMIN = EMIN;
+            const int XMAX = EMAX;
+            const int YMIN = EMIN;
+            const int YMAX = EMAX;
             TH1D* enuresponse = new TH1D(fluxtype.c_str(), fluxtype.c_str(), XBINS, XMIN, XMAX);
             enuresponse->GetXaxis()->SetLabelSize(0.05);
             enuresponse->GetYaxis()->SetLabelSize(0.05);
