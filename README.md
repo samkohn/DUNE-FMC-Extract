@@ -13,8 +13,7 @@ These scripts take as input Fast Monte Carlo output
 files, GENIE splines, Fast Monte Carlo flux files
 (provided by the flux group), and the Prob3++ library
 `.so` file. For examples of where to find them, check out
-[Configuration.C](https://github.com/samkohn/DUNE-FMC-Extract/blob/maste
-r/Configuration.C).
+[Configuration.C](https://github.com/samkohn/DUNE-FMC-Extract/blob/master/Configuration.C).
 
 How to use
 --------
