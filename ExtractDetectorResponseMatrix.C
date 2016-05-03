@@ -53,7 +53,6 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE,
         eventcutnames.push_back("_NC-like");
     }
     std::string prefix = CFG_InputDir + CFG_IDRMDir;
-    //std::string prefix = "/dune/data/users/lblpwg_tools/FastMC_Data/outputs/cherdack/v3r2p4b/nominal";
     prefix.append("/fastmcNtp_20160404_lbne_g4lbnev3r2p4b_");
     std::string suffix = "_LAr_1_g280_Ar40_5000_GENIE_2100.root";
     for(size_t i = 0; i < eventcuts.size(); ++i)
@@ -83,7 +82,6 @@ int ExtractDetectorResponseMatrix(const int NBINSSQUARE,
             }
             TTree* fluxData = (TTree*) fin->Get("gst");
             TCanvas* c1 = new TCanvas();
-            //const int NBINSSQUARE = 20;
             const int XBINS = NBINSSQUARE;
             const int YBINS = NBINSSQUARE;
             const int XMIN = EMIN;

@@ -44,7 +44,6 @@ int ExtractEfficiency(const int NBINSSQUARE, const double EMIN,
     eventcutnames.push_back("_nueCC-like");
     eventcutnames.push_back("_NC-like");
     std::string prefix = CFG_InputDir + CFG_IEffDir;
-    //std::string prefix = "/dune/data/users/lblpwg_tools/FastMC_Data/outputs/cherdack/v3r2p4b/nominal";
     prefix.append("/fastmcNtp_20160404_lbne_g4lbnev3r2p4b_");
     std::string suffix = "_LAr_1_g280_Ar40_5000_GENIE_2100.root";
     for(size_t i = 0; i < eventcuts.size(); ++i)
@@ -66,7 +65,6 @@ int ExtractEfficiency(const int NBINSSQUARE, const double EMIN,
             std::cout << "INFO: Flux type " << fluxtype << std::endl;
             TTree* fluxData = (TTree*) fin->Get("gst");
             TCanvas* c1 = new TCanvas();
-            //const int NBINSSQUARE = 20;
             const double EMIN = 0;
             const double EMAX = 10;
             const int XBINS = NBINSSQUARE;
@@ -89,7 +87,6 @@ int ExtractEfficiency(const int NBINSSQUARE, const double EMIN,
             TH1D* normalizationHist = new TH1D("norm", "norm", XBINS, XMIN, XMAX);
             fluxData->Draw("Ev_reco>>norm", "cc");
             enuresponse->Divide(normalizationHist); // Normalize
-            //c1->Print((std::string("~/outputs/detector-response/") + fluxtype + eventcutname + "_trueNC.pdf").c_str());
             // Print out the matrix information
             std::ofstream outputfile;
             std::string outfilename(CFG_OutputDir + CFG_EffDir + fluxtype +
