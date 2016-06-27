@@ -83,10 +83,6 @@ int ExtractEfficiency(const int NBINSSQUARE, const double EMIN,
             fluxData->Draw((std::string("Ev_reco>>") + fluxtype).c_str(), (eventcut + " && " + channel).c_str());
             enuresponse->GetXaxis()->SetTitle("E_{#nu, reco} [GeV]");
             enuresponse->GetYaxis()->SetTitle("Number of events");
-            double nentries = enuresponse->Integral();
-            TH1D* normalizationHist = new TH1D("norm", "norm", XBINS, XMIN, XMAX);
-            fluxData->Draw("Ev_reco>>norm", channel.c_str());
-            enuresponse->Divide(normalizationHist); // Normalize
             // Print out the matrix information
             std::ofstream outputfile;
             std::string outfilename(CFG_OutputDir + CFG_EffDir + fluxtype +
